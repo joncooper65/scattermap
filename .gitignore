@@ -1,5 +1,4 @@
-/build-number.txt
-*/target/*
+.vagrant
 
 # Created by http://www.gitignore.io
 

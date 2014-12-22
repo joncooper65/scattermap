@@ -15,59 +15,40 @@ $(document).ready(function() {
 		fillOpacity: 0.1
 	}).addTo(map);
 
-	var markers = getMarkers();
+		var features = getFeatures();
+		var mygeojson = L.geoJson(features).addTo(map);
 
-	for(i=0; i<markers.length; i++){
-		markers[i].addTo(map);
-	}
+	 map.on('movestart', function(e){
+	 	map.removeLayer(mygeojson);
+	 });
 
-	map.on('movestart', function(e){
-		for(i=0; i<markers.length; i++){
-			map.removeLayer(markers[i]);
-		}
-	});
+	 map.on('moveend', function(e){
+	 	circle.setLatLng(map.getCenter());
+	 	features = getFeatures();
+	 	mygeojson = L.geoJson(features).addTo(map);
+	 });
 
 	map.on('move', function(e){
 		circle.setLatLng(map.getCenter());
 	});
 
-	map.on('moveend', function(e){
-		circle.setLatLng(map.getCenter());
-		markers = getMarkers();
-		for(i=1; i<markers.length; i++){
-			markers[i].addTo(map);
-		}
-	});
-
-	function getMarkers(){
-		markers = [];
+	function getFeatures(){
+		features = [];
 		for(i=0; i<numMarkers; i++){
-			markers.push(getMarker(map.getCenter()));
+			features.push(getFeature(map.getCenter()));
 		}
-		return markers;
+		return features;
 	}
 
-	function getMarker(latlng){
-		// var radius = 6000;
-		// var startlat = latlng.lat;
-		// var startlng = latlng.lng;
-		// var distance = Math.random() * radius; //Random distance within circle
-		// var theta = Math.random() * 6.283; //Radom rotation in radians
-
-		// var dx = distance * Math.cos(theta);
-		// var dy = distance * Math.sin(theta);
-		// var delta_longitude = dx/(111320 * Math.cos(startlat));
-		// var delta_latitude = dy/110540;
-		// var new_longitude = startlng + delta_longitude;
-		// var new_latitude = startlat + delta_latitude;
-		// return L.marker(L.latLng(new_latitude, new_longitude))
-
+	function getFeature(latlng){
 		var factor = 0.08;
 		var lat = latlng.lat + Math.random() * factor * (Math.random() < 0.5 ? -1 : 1);
 		var lng = latlng.lng + Math.random() * factor * (Math.random() < 0.5 ? -1 : 1);
-		return L.marker(L.latLng(lat, lng));
+
+		return {"type": "Feature",
+							"geometry": {"type": "Point", "coordinates": [lng, lat]},
+							"properties": {"species": "banana"}
+						};
 	}
 
-
 });
-
