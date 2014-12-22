@@ -17,17 +17,27 @@ $(document).ready(function() {
 
 	map.fitBounds(circle.getBounds())
 
+	function onEachFeature(feature, layer){
+		if(feature.properties && feature.properties.species){
+			layer.bindPopup(feature.properties.species);
+		}
+	}
+
 	var features = getFeatures();
-	var mygeojson = L.geoJson(features).addTo(map);
+	var geojsonlayer = L.geoJson(features, {
+		onEachFeature: onEachFeature
+	}).addTo(map);
 
 	 map.on('movestart', function(e){
-	 	map.removeLayer(mygeojson);
+	 	map.removeLayer(geojsonlayer);
 	 });
 
 	 map.on('moveend', function(e){
 	 	circle.setLatLng(map.getCenter());
 	 	features = getFeatures();
-	 	mygeojson = L.geoJson(features).addTo(map);
+	 	geojsonlayer = L.geoJson(features, {
+			onEachFeature: onEachFeature
+		}).addTo(map);
 	 });
 
 	map.on('move', function(e){
