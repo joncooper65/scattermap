@@ -15,8 +15,10 @@ $(document).ready(function() {
 		fillOpacity: 0.1
 	}).addTo(map);
 
-		var features = getFeatures();
-		var mygeojson = L.geoJson(features).addTo(map);
+	map.fitBounds(circle.getBounds())
+
+	var features = getFeatures();
+	var mygeojson = L.geoJson(features).addTo(map);
 
 	 map.on('movestart', function(e){
 	 	map.removeLayer(mygeojson);
