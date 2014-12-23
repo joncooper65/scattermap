@@ -1,12 +1,22 @@
 $(document).ready(function() {
-	var map = L.map('map');
+	var map = L.map('map',{
+		center: new L.LatLng(54.5842894, -2.8893719),
+		zoom: 11,
+		dragging: true,
+		touchZoom: true,
+		tap: false,
+		inertia: true,
+		inertiaDeceleration: 3000,
+		inertiaMaxSpeed: 1500,
+		tap: true,
+
+	});
 	var osmUrl = 'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
 	var osmAttrib = 'Map data copyright <a href="http://openstreetmap.org">OpenStreetMap</a> contributors';
 	var osm = new L.TileLayer(osmUrl, {minZoom: 8, maxZoom: 19, attribution: osmAttrib});
 
 	var numMarkers = 10;
 
-	map.setView(new L.LatLng(54.5842894, -2.8893719), 11);
 	map.addLayer(osm);
 
 	var circle = L.circle(map.getCenter(), 10000, {
