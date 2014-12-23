@@ -1,31 +1,36 @@
 $(document).ready(function() {
-	var map = L.map('map',{
-		center: new L.LatLng(54.5842894, -2.8893719),
-		zoom: 11,
-		dragging: true,
-		touchZoom: true,
-		tap: false,
-		inertia: true,
-		inertiaDeceleration: 3000,
-		inertiaMaxSpeed: 1500,
-		tap: true,
-
-	});
-	var osmUrl = 'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
-	var osmAttrib = 'Map data copyright <a href="http://openstreetmap.org">OpenStreetMap</a> contributors';
-	var osm = new L.TileLayer(osmUrl, {minZoom: 8, maxZoom: 19, attribution: osmAttrib});
-
+	var map;
+	var circle;
+	var features;
 	var numMarkers = 10;
+	initialise();
 
-	map.addLayer(osm);
-
-	var circle = L.circle(map.getCenter(), 10000, {
-		color: 'blue',
-		fillColor: 'blue',
-		fillOpacity: 0.1
-	}).addTo(map);
-
-	map.fitBounds(circle.getBounds())
+	function initialise(){
+		map = L.map('map',{
+			center: new L.LatLng(54.5842894, -2.8893719),
+			zoom: 11,
+			dragging: true,
+			touchZoom: true,
+			tap: false,
+			inertia: true,
+			inertiaDeceleration: 3000,
+			inertiaMaxSpeed: 1500,
+			tap: true,
+		});
+		L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', 
+			{
+				minZoom: 8, 
+				maxZoom: 19, 
+				attribution: 'Map data copyright <a href="http://openstreetmap.org">OpenStreetMap</a> contributors'
+			}
+		).addTo(map);
+		circle = L.circle(map.getCenter(), 10000, {
+			color: 'blue',
+			fillColor: 'blue',
+			fillOpacity: 0.1
+		}).addTo(map);
+		map.fitBounds(circle.getBounds())
+	}
 
 	function onEachFeature(feature, layer){
 		if(feature.properties && feature.properties.species){
@@ -33,26 +38,21 @@ $(document).ready(function() {
 		}
 	}
 
-	var features = getFeatures();
-	var geojsonlayer = L.geoJson(features, {
-		onEachFeature: onEachFeature
-	}).addTo(map);
+	  map.on('movestart', function(e){
+	  	map.removeLayer(geojsonlayer);
+	  });
 
-	 map.on('movestart', function(e){
-	 	map.removeLayer(geojsonlayer);
-	 });
-
-	 map.on('moveend', function(e){
+	 map.on('move', function(e){
 	 	circle.setLatLng(map.getCenter());
-	 	features = getFeatures();
-	 	geojsonlayer = L.geoJson(features, {
-			onEachFeature: onEachFeature
-		}).addTo(map);
 	 });
 
-	map.on('move', function(e){
-		circle.setLatLng(map.getCenter());
-	});
+  map.on('moveend', function(e){
+  	circle.setLatLng(map.getCenter());
+  	features = getFeatures();
+  	geojsonlayer = L.geoJson(features, {
+ 			onEachFeature: onEachFeature
+	 	}).addTo(map);
+  });
 
 	function getFeatures(){
 		features = [];
