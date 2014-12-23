@@ -24,9 +24,9 @@ $(document).ready(function() {
 				attribution: 'Map data copyright <a href="http://openstreetmap.org">OpenStreetMap</a> contributors'
 			}
 		).addTo(map);
-		map.locate({setView: true, maxZoom: 11});
+		map.locate({setView: true, maxZoom: 12});
 		map.on('locationfound', onLocationFound);
-
+		map.on('locationerror', onLocationError);
 	}
 
 	function onLocationFound(e){
@@ -54,6 +54,10 @@ $(document).ready(function() {
 	  	addFeatures();
 	  });
 
+	}
+
+	function onLocationError(e){
+		alert(e.message);
 	}
 
 	function addFeatures(){
