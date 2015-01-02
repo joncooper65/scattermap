@@ -1,13 +1,12 @@
 require.config({
   paths:{
-    "jquery": "../vendor/jquery/dist/jquery.min",
-    "jquery.mobile": "../vendor/jquery-mobile/js/jquery.mobile",
+    "jquery": "../vendor/jquery/jquery.min",
+    "jquerymobile": "../vendor/jquery-mobile-bower/js/jquery.mobile-1.4.2.min",
     "leaflet": "../vendor/leaflet/dist/leaflet"
   }
 });
 
-require(["jquery", "jquery.mobile", "leaflet"], function($, jquerymobile, L){
-
+require(["jquery", "jquerymobile", "leaflet"], function($, jquerymobile, L){
   $(document).ready(function() {
     var map;
     var circle;
@@ -17,7 +16,7 @@ require(["jquery", "jquery.mobile", "leaflet"], function($, jquerymobile, L){
 
     function initialise(){
       map = L.map("map",{
-        zoom: 11,
+        zoom: 14,
         dragging: true,
         touchZoom: true,
         tap: false,
@@ -34,14 +33,12 @@ require(["jquery", "jquery.mobile", "leaflet"], function($, jquerymobile, L){
           attribution: "Map data copyright <a href='http://openstreetmap.org'>OpenStreetMap</a> contributors"
         }
       ).addTo(map);
-      map.locate({setView: true, maxZoom: 12});
+      map.locate({setView: true, zoom: 10});
       map.on("locationfound", onLocationFound);
       map.on("locationerror", onLocationError);
     }
 
     function onLocationFound(e){
-      console.log(e);
-      console.log(e.latlng);
       circle = L.circle(e.latlng, 10000, {
         color: "blue",
         fillColor: "blue",
