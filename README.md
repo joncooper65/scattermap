@@ -9,6 +9,6 @@ sudo apt-get install nodejs
 
 sudo apt-get install npm
 
-sudo npm install -g bower
+sudo npm install -g bower (may also need sudo ln -s /usr/bin/nodejs /usr/bin/node)
 
 bower install
