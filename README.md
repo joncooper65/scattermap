@@ -16,3 +16,12 @@ sudo npm install -g bower
 will probably need to do: sudo ln -s /usr/bin/nodejs /usr/bin/node
 
 bower install
+
+NOTE
+----
+http://askubuntu.com/questions/4983/what-are-ppas-and-how-do-i-use-them
+probably need to add the following to linux's sources located in /etc/sources.list (the tool above does this for you):
+- deb http://ppa.launchpad.net/chris-lea/node.js/ubuntu trusty main 
+- deb-src http://ppa.launchpad.net/chris-lea/node.js/ubuntu trusty main 
+
+then do apt-get update followed by apt-get install nodejs - means you shouldn't need symbolic link step
