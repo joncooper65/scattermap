@@ -2,11 +2,12 @@ require.config({
   paths:{
     "jquery": "../vendor/jquery/jquery.min",
     "jquerymobile": "../vendor/jquery-mobile-bower/js/jquery.mobile-1.4.2.min",
-    "leaflet": "../vendor/leaflet/dist/leaflet"
+    "leaflet": "../vendor/leaflet/dist/leaflet",
+    "monk": "..vendor/monk/lib/monk"
   }
 });
 
-require(["jquery", "jquerymobile", "leaflet"], function($, jquerymobile, L){
+require(["jquery", "jquerymobile", "leaflet", "monk"], function($, jquerymobile, L, monk){
   $(document).ready(function() {
     var map;
     var circle;
@@ -59,6 +60,7 @@ require(["jquery", "jquerymobile", "leaflet"], function($, jquerymobile, L){
       map.on("moveend", function(e){
         circle.setLatLng(map.getCenter());
         addFeatures();
+        doSomethingMonky();
       });
 
     }
@@ -97,6 +99,20 @@ require(["jquery", "jquerymobile", "leaflet"], function($, jquerymobile, L){
                 "geometry": {"type": "Point", "coordinates": [lng, lat]},
                 "properties": {"species": "banana"}
               };
+    }
+
+    function doSomethingMonky(){
+      alert('in monky');
+      db = monk('localhost/mydb');
+      records = db.get("testData");
+      records.find({}, {}, function(err, doc){
+        alert('in callback');
+        if(err){
+          alert(err);
+        } else {
+          alert('found some');
+        }
+      });
     }
 
   });
