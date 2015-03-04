@@ -2,22 +2,20 @@ require.config({
   paths:{
     "jquery": "../vendor/jquery/jquery.min",
     "jquerymobile": "../vendor/jquery-mobile-bower/js/jquery.mobile-1.4.2.min",
-    "leaflet": "../vendor/leaflet/dist/leaflet",
-    "monk": "..vendor/monk/lib/monk"
+    "leaflet": "../vendor/leaflet/dist/leaflet"
   }
 });
 
-require(["jquery", "jquerymobile", "leaflet", "monk"], function($, jquerymobile, L, monk){
+require(["jquery", "jquerymobile", "leaflet"], function($, jquerymobile, L){
   $(document).ready(function() {
     var map;
-    var circle;
     var features;
     var numMarkers = 10;
     initialise();
 
     function initialise(){
       map = L.map("map",{
-        zoom: 14,
+        zoom: 10,
         dragging: true,
         touchZoom: true,
         tap: false,
@@ -40,12 +38,7 @@ require(["jquery", "jquerymobile", "leaflet", "monk"], function($, jquerymobile,
     }
 
     function onLocationFound(e){
-      circle = L.circle(e.latlng, 10000, {
-        color: "blue",
-        fillColor: "blue",
-        fillOpacity: 0.1
-      }).addTo(map);
-      addFeatures();
+        getRecords();
 
       map.on("movestart", function(e){
         if (typeof geojsonlayer != "undefined"){
@@ -54,26 +47,57 @@ require(["jquery", "jquerymobile", "leaflet", "monk"], function($, jquerymobile,
       });
 
       map.on("move", function(e){
-        circle.setLatLng(map.getCenter());
       });
 
       map.on("moveend", function(e){
-        circle.setLatLng(map.getCenter());
-        addFeatures();
-        doSomethingMonky();
+      	getRecords();
       });
 
+    }
+
+    function getGbifQuery(){
+        bounds = map.getBounds();
+        return 'http://api.gbif.org/v1/occurrence/search?decimalLongitude=' 
+                     + bounds.getWest() + ',' + bounds.getEast() + '&'
+                     + '&decimalLatitude=' + bounds.getSouth() + ',' + bounds.getNorth()
+                     + '&limit=100'
+                     + '&callback=processRecords';
+    }
+
+    function getRecords(){
+        var url = getGbifQuery();
+        $.ajax({
+            type: 'GET',
+            url: url,
+            async: false,
+            jsonpCallback: 'processRecords',
+            contentType: "application/json",
+            dataType: 'jsonp',
+            success: function(json) {
+                console.dir('implement paging!  Number of records this time: ' + json.count);
+                records = [];
+                $.each(json.results, function(index, value){
+                    records.push({"type": "Feature",
+                        "geometry": {"type": "Point", "coordinates": [getNoise(value.decimalLongitude), getNoise(value.decimalLatitude)]},
+                        "properties": {"species": value.species}
+                    });
+                });
+                geojsonlayer = L.geoJson(records, {
+                    onEachFeature: onEachFeature
+                }).addTo(map);
+            },
+            error: function(e) {
+                console.log(e.message);
+            }
+        });
+    }
+
+    function getNoise(value){
+        return value + Math.random() * 0.0001 * (Math.random() < 0.5 ? -1 : 1);
     }
 
     function onLocationError(e){
       alert(e.message);
-    }
-
-    function addFeatures(){
-      features = getFeatures();
-      geojsonlayer = L.geoJson(features, {
-         onEachFeature: onEachFeature
-       }).addTo(map);
     }
 
     function onEachFeature(feature, layer){
@@ -81,39 +105,6 @@ require(["jquery", "jquerymobile", "leaflet", "monk"], function($, jquerymobile,
         layer.bindPopup(feature.properties.species);
       }
     }
-
-    function getFeatures(){
-      features = [];
-      for(i=0; i<numMarkers; i++){
-        features.push(getFeature(map.getCenter()));
-      }
-      return features;
-    }
-
-    function getFeature(latlng){
-      var factor = 0.08;
-      var lat = latlng.lat + Math.random() * factor * (Math.random() < 0.5 ? -1 : 1);
-      var lng = latlng.lng + Math.random() * factor * (Math.random() < 0.5 ? -1 : 1);
-
-      return {"type": "Feature",
-                "geometry": {"type": "Point", "coordinates": [lng, lat]},
-                "properties": {"species": "banana"}
-              };
-    }
-
-    function doSomethingMonky(){
-      alert('in monky');
-      db = monk('localhost/mydb');
-      records = db.get("testData");
-      records.find({}, {}, function(err, doc){
-        alert('in callback');
-        if(err){
-          alert(err);
-        } else {
-          alert('found some');
-        }
-      });
-    }
-
   });
+
 });
