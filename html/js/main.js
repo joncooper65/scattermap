@@ -41,9 +41,6 @@ require(["jquery", "jquerymobile", "leaflet"], function($, jquerymobile, L){
         getRecords();
 
       map.on("movestart", function(e){
-        if (typeof geojsonlayer != "undefined"){
-          map.removeLayer(geojsonlayer);
-        }
       });
 
       map.on("move", function(e){
@@ -60,7 +57,8 @@ require(["jquery", "jquerymobile", "leaflet"], function($, jquerymobile, L){
         return 'http://api.gbif.org/v1/occurrence/search?decimalLongitude=' 
                      + bounds.getWest() + ',' + bounds.getEast() + '&'
                      + '&decimalLatitude=' + bounds.getSouth() + ',' + bounds.getNorth()
-                     + '&limit=100'
+                     + '&hasCoordinate=true'
+                     + '&limit=300'
                      + '&callback=processRecords';
     }
 
@@ -82,6 +80,7 @@ require(["jquery", "jquerymobile", "leaflet"], function($, jquerymobile, L){
                         "properties": {"species": value.species}
                     });
                 });
+                removeCurrentMarkers();
                 geojsonlayer = L.geoJson(records, {
                     onEachFeature: onEachFeature
                 }).addTo(map);
@@ -91,6 +90,13 @@ require(["jquery", "jquerymobile", "leaflet"], function($, jquerymobile, L){
             }
         });
     }
+
+    function removeCurrentMarkers(){
+        if (typeof geojsonlayer != "undefined"){
+            map.removeLayer(geojsonlayer);
+        }
+    }
+
 
     function getNoise(value){
         return value + Math.random() * 0.0001 * (Math.random() < 0.5 ? -1 : 1);
