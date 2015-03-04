@@ -25,6 +25,7 @@ require(["jquery", "jquerymobile", "leaflet"], function($, jquerymobile, L){
         tap: true,
       });
 
+      //Gorgeous map: http://jawj.github.io/OverlappingMarkerSpiderfier-Leaflet/demo.html
       L.tileLayer("http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", 
         {
           minZoom: 1, 
