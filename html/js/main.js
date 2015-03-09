@@ -2,11 +2,12 @@ require.config({
   paths:{
     "jquery": "../vendor/jquery/jquery.min",
     "jquerymobile": "../vendor/jquery-mobile-bower/js/jquery.mobile-1.4.2.min",
-    "leaflet": "../vendor/leaflet/dist/leaflet"
+    "leaflet": "../vendor/leaflet/dist/leaflet",
+    "underscore": "../vendor/underscore/underscore-min"
   }
 });
 
-require(["jquery", "jquerymobile", "leaflet"], function($, jquerymobile, L){
+require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerymobile, L, _){
   $(document).ready(function() {
     var map;
     var features;
@@ -73,8 +74,11 @@ require(["jquery", "jquerymobile", "leaflet"], function($, jquerymobile, L){
             contentType: "application/json",
             dataType: 'jsonp',
             success: function(json) {
-                console.dir('implement paging!  Number of records this time: ' + json.count);
+                console.dir('Total number of records: ' + json.count);
                 records = [];
+
+		getUniqueLocations(json.results);
+		
                 $.each(json.results, function(index, value){
                     records.push({"type": "Feature",
                         "geometry": {"type": "Point", "coordinates": [getNoise(value.decimalLongitude), getNoise(value.decimalLatitude)]},
@@ -111,6 +115,21 @@ require(["jquery", "jquerymobile", "leaflet"], function($, jquerymobile, L){
       if(feature.properties && feature.properties.species){
         layer.bindPopup(feature.properties.species);
       }
+    }
+
+    //Work in progress, trying to get list of species grouped by unique lat-lon
+    function getUniqueLocations(results){
+	//_.uniq(myArray, function(elem) {
+	//    return JSON.stringify(_.pick(elem, ['a', 'b']));
+	//});
+
+	var latlon = _.uniq(results, function(elem) {
+	  return JSON.stringify(_.pick(elem, ['decimalLongitude', 'decimalLatitude']));
+	});
+	console.dir(latlon);	
+
+	//var uniqueLon = _.uniq(_.pluck(json.results, 'decimalLongitude'));
+	//		console.dir(uniqueLon);
     }
   });
 
