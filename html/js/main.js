@@ -123,10 +123,20 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
 	//    return JSON.stringify(_.pick(elem, ['a', 'b']));
 	//});
 
-	var latlon = _.uniq(results, function(elem) {
-	  return JSON.stringify(_.pick(elem, ['decimalLongitude', 'decimalLatitude']));
-	});
-	console.dir(latlon);	
+    var aa = [];
+    var dd = _.each(results, function(elem){
+      return aa.push(_.pick(elem, ['decimalLongitude', 'decimalLatitude']));
+    });
+    console.dir(aa);
+    var bb = _.uniq(aa);
+    console.dir(bb);
+
+  	var latlon = _.uniq(results, function(elem) {
+//      console.log(_.pick(elem, 'decimalLongitude'));
+      var temp = JSON.stringify(_.pick(elem, ['decimalLongitude', 'decimalLatitude']));
+      return temp;
+  	});
+//	console.dir(latlon);	
 
 	//var uniqueLon = _.uniq(_.pluck(json.results, 'decimalLongitude'));
 	//		console.dir(uniqueLon);
