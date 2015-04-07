@@ -40,13 +40,11 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
     }
 
     function onLocationFound(e){
-        getRecords();
+      getRecords();
 
-      map.on("movestart", function(e){
-      });
+      map.on("movestart", function(e){});
 
-      map.on("move", function(e){
-      });
+      map.on("move", function(e){});
 
       map.on("moveend", function(e){
       	getRecords();
@@ -77,14 +75,18 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
                 console.dir('Total number of records: ' + json.count);
                 records = [];
 
-		getUniqueLocations(json.results);
-		
-                $.each(json.results, function(index, value){
+                $.each(getUniqueLocations(json.results), function(index, value){
                     records.push({"type": "Feature",
-                        "geometry": {"type": "Point", "coordinates": [getNoise(value.decimalLongitude), getNoise(value.decimalLatitude)]},
+                        "geometry": {"type": "Point", "coordinates": [value.decimalLongitude, value.decimalLatitude]},
                         "properties": {"species": value.species}
                     });
                 });
+                // $.each(json.results, function(index, value){
+                //     records.push({"type": "Feature",
+                //         "geometry": {"type": "Point", "coordinates": [getNoise(value.decimalLongitude), getNoise(value.decimalLatitude)]},
+                //         "properties": {"species": value.species}
+                //     });
+                // });
                 removeCurrentMarkers();
                 geojsonlayer = L.geoJson(records, {
                     onEachFeature: onEachFeature
@@ -113,34 +115,44 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
 
     function onEachFeature(feature, layer){
       if(feature.properties && feature.properties.species){
-        layer.bindPopup(feature.properties.species);
+        var popupContent = '';
+        _.each(feature.properties.species, function(species){
+          popupContent = popupContent + '<br \>' + species;
+        });
+        layer.bindPopup(popupContent);
       }
     }
 
-    //Work in progress, trying to get list of species grouped by unique lat-lon
+    /*This takes the raw results from gbif and reduces to a map of objects.
+    * The map's key is unique on latitude and longitude, and is the map of those two values.
+    * The map's value is an object containing the latitude, longitude an array of species names found at that location
+    */
+
     function getUniqueLocations(results){
-	//_.uniq(myArray, function(elem) {
-	//    return JSON.stringify(_.pick(elem, ['a', 'b']));
-	//});
 
-    var aa = [];
-    var dd = _.each(results, function(elem){
-      return aa.push(_.pick(elem, ['decimalLongitude', 'decimalLatitude']));
-    });
-    console.dir(aa);
-    var bb = _.uniq(aa);
-    console.dir(bb);
+      var picked = [];
+      _.each(results, function(elem){
+        picked.push(_.pick(elem, ['decimalLongitude', 'decimalLatitude', 'species']));
+      });
 
-  	var latlon = _.uniq(results, function(elem) {
-//      console.log(_.pick(elem, 'decimalLongitude'));
-      var temp = JSON.stringify(_.pick(elem, ['decimalLongitude', 'decimalLatitude']));
-      return temp;
-  	});
-//	console.dir(latlon);	
+      _.each(picked, function(elem){
+        elem.local = elem.decimalLongitude + '' + elem.decimalLatitude;
+      });
 
-	//var uniqueLon = _.uniq(_.pluck(json.results, 'decimalLongitude'));
-	//		console.dir(uniqueLon);
+      var records = {};
+      _.each(picked, function(elem){
+        if(records.hasOwnProperty(elem.local)){
+          if(!_.contains(records[elem.local].species, elem.species)){
+            records[elem.local].species.push(elem.species);
+          }
+        }else{
+          records[elem.local] = {decimalLatitude: elem.decimalLatitude, decimalLongitude: elem.decimalLongitude, species: []};
+          records[elem.local].species.push(elem.species);
+        }
+      });
+      return records;
     }
+
   });
 
 });
