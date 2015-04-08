@@ -73,16 +73,8 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
             dataType: 'jsonp',
             success: function(json) {
                 console.dir('Total number of toReturn: ' + json.count);
-                toReturn = [];
-
-                $.each(getUniqueLocations(json.results), function(index, value){
-                    toReturn.push({"type": "Feature",
-                        "geometry": {"type": "Point", "coordinates": [value.decimalLongitude, value.decimalLatitude]},
-                        "properties": {"species": value.species}
-                    });
-                });
                 removeCurrentMarkers();
-                geojsonlayer = L.geoJson(toReturn, {
+                geojsonlayer = L.geoJson(getGeojson(json.results), {
                     onEachFeature: onEachFeature
                 }).addTo(map);
             },
@@ -118,28 +110,39 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
       }
     }
 
-    /*This takes the raw results from gbif and reduces to a map of objects.
-    * The map's key is unique on latitude and longitude, and is the map of those two values.
-    * The map's value is an object containing the latitude, longitude an array of species names found at that location
+    /*This takes the raw results from gbif and returns an array of geojson objects.
+    * The geojson objects of the array are unique on lat/long and each contains a property 
+    * that is an array of species names found at that location.
     */
-
-    function getUniqueLocations(results){
-
-      var toReturn = {};
+    function getGeojson(results){
+      var geojsonResults = {};
       _.each(results, function(elem){
-        var local = elem.decimalLongitude + '' + elem.decimalLatitude;
-        if(toReturn.hasOwnProperty(local)){
-          if(!_.contains(toReturn[local].species, elem.species)){
-            toReturn[local].species.push(elem.species);
+        if(elem.hasOwnProperty('species')){//Don't do it if this gbif record has no species name
+          var local = elem.decimalLongitude + '' + elem.decimalLatitude;
+          if(geojsonResults.hasOwnProperty(local)){
+            if(!_.contains(geojsonResults[local].properties.species, elem.species)){
+              geojsonResults[local].properties.species.push(elem.species);
+            }
+          }else{
+
+            geojsonResults[local] = {
+              "type": "Feature",
+              "geometry": {"type": "Point", "coordinates": [elem.decimalLongitude, elem.decimalLatitude]},
+              "properties": {"species": []}
+            };
+            geojsonResults[local].properties.species.push(elem.species);
           }
-        }else{
-          toReturn[local] = {decimalLatitude: elem.decimalLatitude, decimalLongitude: elem.decimalLongitude, species: []};
-          toReturn[local].species.push(elem.species);
         }
+      });
+      _.each(geojsonResults, function(elem){
+        elem.properties.species.sort();
+      });
+      var toReturn = [];
+      _.map(geojsonResults, function(elem){
+        toReturn.push(elem);
       });
       return toReturn;
     }
-
   });
 
 });
