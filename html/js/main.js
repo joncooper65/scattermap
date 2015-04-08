@@ -11,7 +11,6 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
   $(document).ready(function() {
     var map;
     var features;
-    var numMarkers = 10;
     initialise();
 
     function initialise(){
@@ -40,29 +39,19 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
     }
 
     function onLocationFound(e){
-      gettoReturn();
+      addRecords();
 
       map.on("movestart", function(e){});
 
       map.on("move", function(e){});
 
       map.on("moveend", function(e){
-      	gettoReturn();
+      	addRecords();
       });
 
     }
 
-    function getGbifQuery(){
-        bounds = map.getBounds();
-        return 'http://api.gbif.org/v1/occurrence/search?decimalLongitude=' 
-                     + bounds.getWest() + ',' + bounds.getEast() + '&'
-                     + '&decimalLatitude=' + bounds.getSouth() + ',' + bounds.getNorth()
-                     + '&hasCoordinate=true'
-                     + '&limit=300'
-                     + '&callback=processtoReturn';
-    }
-
-    function gettoReturn(){
+    function addRecords(){
         var url = getGbifQuery();
         $.ajax({
             type: 'GET',
@@ -84,15 +73,20 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
         });
     }
 
+    function getGbifQuery(){
+        bounds = map.getBounds();
+        return 'http://api.gbif.org/v1/occurrence/search?decimalLongitude=' 
+                     + bounds.getWest() + ',' + bounds.getEast() + '&'
+                     + '&decimalLatitude=' + bounds.getSouth() + ',' + bounds.getNorth()
+                     + '&hasCoordinate=true'
+                     + '&limit=300'
+                     + '&callback=processtoReturn';
+    }
+
     function removeCurrentMarkers(){
         if (typeof geojsonlayer != "undefined"){
             map.removeLayer(geojsonlayer);
         }
-    }
-
-
-    function getNoise(value){
-        return value + Math.random() * 0.0001 * (Math.random() < 0.5 ? -1 : 1);
     }
 
     function onLocationError(e){
@@ -100,13 +94,8 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
     }
 
     function onEachFeature(feature, layer){
-      if(feature.properties && feature.properties.species){
-        var popupContent = '<div class="popup-content">';
-        _.each(feature.properties.species, function(species){
-          popupContent = popupContent + '<br \>' + species;
-        });
-        popupContent = popupContent + '</div>';
-        layer.bindPopup(popupContent);
+      //layer.bindPopup(getPopupContentVernacular(feature.properties.taxonkey));
+      layer.bindPopup(getPopupContentScientific(feature));
       }
     }
 
@@ -118,19 +107,22 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
       var geojsonResults = {};
       _.each(results, function(elem){
         if(elem.hasOwnProperty('species')){//Don't do it if this gbif record has no species name
+
           var local = elem.decimalLongitude + '' + elem.decimalLatitude;
           if(geojsonResults.hasOwnProperty(local)){
             if(!_.contains(geojsonResults[local].properties.species, elem.species)){
               geojsonResults[local].properties.species.push(elem.species);
+              geojsonResults[local].properties.taxonKey.push(elem.taxonKey);
             }
           }else{
 
             geojsonResults[local] = {
               "type": "Feature",
               "geometry": {"type": "Point", "coordinates": [elem.decimalLongitude, elem.decimalLatitude]},
-              "properties": {"species": []}
+              "properties": {"species": [], "taxonKey": []}
             };
             geojsonResults[local].properties.species.push(elem.species);
+            geojsonResults[local].properties.taxonKey.push(elem.taxonKey);
           }
         }
       });
@@ -144,5 +136,41 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
       return toReturn;
     }
   });
+
+  function getPopupContentVernacular(taxonKeys){
+    var popupContent = '<div class="popup-content">';
+    _.each(taxonKeys, function(taxonKey){
+      popupContent = popupContent + taxonKey + '<br />';
+    });
+    popupContent = popupContent + '</div>';
+    return popupContent;
+    // var url = 'http://api.gbif.org/v1/species/' + taxonKey;
+    // $.ajax({
+    //     type: 'GET',
+    //     url: url,
+    //     async: false,
+    //     contentType: "application/json",
+    //     dataType: 'jsonp',
+    //     success: function(json) {
+    //       popupContent = popupContent + json.vernacularName + '<br \\>';
+    //       console.log('hi');
+    //       console.log(popupContent);
+    //     },
+    //     error: function(e) {
+    //         console.log(e.message);
+    //     }
+    // });
+  }
+
+  function getPopupContentScientific(feature){
+    var popupContent = '<div class="popup-content">';
+     if(feature.properties && feature.properties.species){
+        _.each(feature.properties.species, function(species){
+          popupContent = popupContent + species + '<br \>';
+        });
+      }
+    popupContent = popupContent + '</div>';
+    return popupContent;
+  }
 
 });
