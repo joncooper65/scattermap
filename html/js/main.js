@@ -40,14 +40,14 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
     }
 
     function onLocationFound(e){
-      getRecords();
+      gettoReturn();
 
       map.on("movestart", function(e){});
 
       map.on("move", function(e){});
 
       map.on("moveend", function(e){
-      	getRecords();
+      	gettoReturn();
       });
 
     }
@@ -59,36 +59,30 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
                      + '&decimalLatitude=' + bounds.getSouth() + ',' + bounds.getNorth()
                      + '&hasCoordinate=true'
                      + '&limit=300'
-                     + '&callback=processRecords';
+                     + '&callback=processtoReturn';
     }
 
-    function getRecords(){
+    function gettoReturn(){
         var url = getGbifQuery();
         $.ajax({
             type: 'GET',
             url: url,
             async: false,
-            jsonpCallback: 'processRecords',
+            jsonpCallback: 'processtoReturn',
             contentType: "application/json",
             dataType: 'jsonp',
             success: function(json) {
-                console.dir('Total number of records: ' + json.count);
-                records = [];
+                console.dir('Total number of toReturn: ' + json.count);
+                toReturn = [];
 
                 $.each(getUniqueLocations(json.results), function(index, value){
-                    records.push({"type": "Feature",
+                    toReturn.push({"type": "Feature",
                         "geometry": {"type": "Point", "coordinates": [value.decimalLongitude, value.decimalLatitude]},
                         "properties": {"species": value.species}
                     });
                 });
-                // $.each(json.results, function(index, value){
-                //     records.push({"type": "Feature",
-                //         "geometry": {"type": "Point", "coordinates": [getNoise(value.decimalLongitude), getNoise(value.decimalLatitude)]},
-                //         "properties": {"species": value.species}
-                //     });
-                // });
                 removeCurrentMarkers();
-                geojsonlayer = L.geoJson(records, {
+                geojsonlayer = L.geoJson(toReturn, {
                     onEachFeature: onEachFeature
                 }).addTo(map);
             },
@@ -115,10 +109,11 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
 
     function onEachFeature(feature, layer){
       if(feature.properties && feature.properties.species){
-        var popupContent = '';
+        var popupContent = '<div class="popup-content">';
         _.each(feature.properties.species, function(species){
           popupContent = popupContent + '<br \>' + species;
         });
+        popupContent = popupContent + '</div>';
         layer.bindPopup(popupContent);
       }
     }
@@ -130,27 +125,19 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
 
     function getUniqueLocations(results){
 
-      var picked = [];
+      var toReturn = {};
       _.each(results, function(elem){
-        picked.push(_.pick(elem, ['decimalLongitude', 'decimalLatitude', 'species']));
-      });
-
-      _.each(picked, function(elem){
-        elem.local = elem.decimalLongitude + '' + elem.decimalLatitude;
-      });
-
-      var records = {};
-      _.each(picked, function(elem){
-        if(records.hasOwnProperty(elem.local)){
-          if(!_.contains(records[elem.local].species, elem.species)){
-            records[elem.local].species.push(elem.species);
+        var local = elem.decimalLongitude + '' + elem.decimalLatitude;
+        if(toReturn.hasOwnProperty(local)){
+          if(!_.contains(toReturn[local].species, elem.species)){
+            toReturn[local].species.push(elem.species);
           }
         }else{
-          records[elem.local] = {decimalLatitude: elem.decimalLatitude, decimalLongitude: elem.decimalLongitude, species: []};
-          records[elem.local].species.push(elem.species);
+          toReturn[local] = {decimalLatitude: elem.decimalLatitude, decimalLongitude: elem.decimalLongitude, species: []};
+          toReturn[local].species.push(elem.species);
         }
       });
-      return records;
+      return toReturn;
     }
 
   });

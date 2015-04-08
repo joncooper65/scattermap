@@ -10,3 +10,8 @@ html, body, .map-page, #map, #index {
 	left: 0;
 	padding: 0 !important;
 }
+
+.popup-content {
+  height: 100px;
+  overflow: auto;
+}
