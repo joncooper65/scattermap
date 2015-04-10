@@ -11,6 +11,8 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
   $(document).ready(function() {
     var map;
     var features;
+    var hasOpenPopups = false;
+    var isVernacularNames = true;
     initialise();
 
     function initialise(){
@@ -84,8 +86,15 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
     }
 
     function removeCurrentMarkers(){
+       //How to remove just the geojson layers??
+       map.eachLayer(function(layer){
+        console.log(typeof layer);
+       });
+
         if (typeof geojsonlayer != "undefined"){
+          if(!hasOpenPopups){
             map.removeLayer(geojsonlayer);
+          }
         }
     }
 
@@ -93,26 +102,30 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
       alert(e.message);
     }
 
-    function handleMarkerClick(event){
+    function handlePopupOpen(event){
+      hasOpenPopups = true;
       event.popup.setContent('Getting species...');
-      populatePopupWithVernacular(event.popup, event.target.feature.properties.taxonKey);
+      if(isVernacularNames){
+        populatePopupWithVernacular(event.popup, event.target.feature.properties.taxonKey);
+      }else{
+        event.popup.setContent(getPopupContentScientific(feature));      }
+    }
+
+    function handlePopupClose(event){
+      hasOpenPopups = false;
     }
 
     function onEachFeature(feature, layer){
-      var isVernacularNames = true;
       var popup = L.popup({
           maxWidth:200,
           maxHeight: 300,
-          autoPan: false,
+          autoPan: true,
           keepInView: true
         }, layer);
       layer.bindPopup(popup);
 
-      if(isVernacularNames){
-        layer.on('popupopen', handleMarkerClick);
-      }else{
-        popup.setContent(getPopupContentScientific(feature));
-      }
+      layer.on('popupopen', handlePopupOpen);
+      layer.on('popupclose', handlePopupClose);
     }
 
     /*This takes the raw results from gbif and returns an array of geojson objects.
