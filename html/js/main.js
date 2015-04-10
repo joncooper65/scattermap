@@ -159,19 +159,33 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
       deferreds.push(getVernacularName(taxonKey));
     });
     $.when.apply($, deferreds).done(function(){
-      var names = [];
+      var vernacularNames = [];
+      var scientificNames = [];
       _.each(deferreds, function(deferred){
-        name = (typeof deferred.responseJSON.vernacularName === "undefined") ? '<i>' + deferred.responseJSON.species + '</i>' : deferred.responseJSON.vernacularName;
-        name = name.charAt(0).toUpperCase() + name.slice(1);
-        names.push(name);
+        if(typeof deferred.responseJSON.vernacularName === "undefined"){
+          scientificNames.push('<i>' + firstToUpper(deferred.responseJSON.species) + '</i>');
+        }else{
+          vernacularNames.push(firstToUpper(deferred.responseJSON.vernacularName));
+        }
       });
-      names.sort();
+      vernacularNames.sort();
+      scientificNames.sort();
       var content = '';
-      _.each(names, function(name){
+      _.each(vernacularNames, function(name){
         content = content + name + '<br />';
       });
+      if(!_.isEmpty(scientificNames)){
+        content = content + '<h4 class="scientific-name-heading">Species without common names:</h4>';
+        _.each(scientificNames, function(name){
+          content = content + name + '<br />';
+        });
+      }
       popup.setContent(content);
     });
+  }
+
+  function firstToUpper(string){
+    return string.charAt(0).toUpperCase() + string.slice(1);
   }
 
   function getVernacularName(taxonKey){
