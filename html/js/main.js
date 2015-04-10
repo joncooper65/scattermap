@@ -93,9 +93,17 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
       alert(e.message);
     }
 
+    function handleMarkerClick(event){
+      event.popup.setContent('Getting species...');
+      populatePopupWithVernacular(event.popup, event.target.feature.properties.taxonKey);
+    }
+
     function onEachFeature(feature, layer){
-      //layer.bindPopup(getPopupContentVernacular(feature.properties.taxonkey));
-      layer.bindPopup(getPopupContentScientific(feature));
+      var isVernacularNames = true;
+      if(isVernacularNames){
+        layer.bindPopup('').on('popupopen', handleMarkerClick);
+      }else{
+        layer.bindPopup(getPopupContentScientific(feature));
       }
     }
 
@@ -137,29 +145,31 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
     }
   });
 
-  function getPopupContentVernacular(taxonKeys){
-    var popupContent = '<div class="popup-content">';
+  function populatePopupWithVernacular(popup, taxonKeys){
+    var deferreds = [];
     _.each(taxonKeys, function(taxonKey){
-      popupContent = popupContent + taxonKey + '<br />';
+      deferreds.push(getVernacularName(taxonKey));
     });
-    popupContent = popupContent + '</div>';
-    return popupContent;
-    // var url = 'http://api.gbif.org/v1/species/' + taxonKey;
-    // $.ajax({
-    //     type: 'GET',
-    //     url: url,
-    //     async: false,
-    //     contentType: "application/json",
-    //     dataType: 'jsonp',
-    //     success: function(json) {
-    //       popupContent = popupContent + json.vernacularName + '<br \\>';
-    //       console.log('hi');
-    //       console.log(popupContent);
-    //     },
-    //     error: function(e) {
-    //         console.log(e.message);
-    //     }
-    // });
+    $.when.apply($, deferreds).done(function(){
+      var content = '<div class="popup-content">';
+      _.each(deferreds, function(deferred){
+        name = (typeof deferred.responseJSON.vernacularName === "undefined") ? '<i>' + deferred.responseJSON.species + '</i>' : deferred.responseJSON.vernacularName;
+        content = content + name + '<br />';
+      });
+      content = content + '</div>';
+      popup.setContent(content);
+    });
+  }
+
+  function getVernacularName(taxonKey){
+    var url = 'http://api.gbif.org/v1/species/' + taxonKey;
+    return $.ajax({
+      type: 'GET',
+      url: url,
+      async: true,
+      contentType: "application/json",
+      dataType: 'jsonp',
+    });
   }
 
   function getPopupContentScientific(feature){
