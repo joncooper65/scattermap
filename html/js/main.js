@@ -100,10 +100,18 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
 
     function onEachFeature(feature, layer){
       var isVernacularNames = true;
+      var popup = L.popup({
+          maxWidth:200,
+          maxHeight: 300,
+          autoPan: false,
+          keepInView: true
+        }, layer);
+      layer.bindPopup(popup);
+
       if(isVernacularNames){
-        layer.bindPopup('').on('popupopen', handleMarkerClick);
+        layer.on('popupopen', handleMarkerClick);
       }else{
-        layer.bindPopup(getPopupContentScientific(feature));
+        popup.setContent(getPopupContentScientific(feature));
       }
     }
 
@@ -151,12 +159,17 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
       deferreds.push(getVernacularName(taxonKey));
     });
     $.when.apply($, deferreds).done(function(){
-      var content = '<div class="popup-content">';
+      var names = [];
       _.each(deferreds, function(deferred){
         name = (typeof deferred.responseJSON.vernacularName === "undefined") ? '<i>' + deferred.responseJSON.species + '</i>' : deferred.responseJSON.vernacularName;
+        name = name.charAt(0).toUpperCase() + name.slice(1);
+        names.push(name);
+      });
+      names.sort();
+      var content = '';
+      _.each(names, function(name){
         content = content + name + '<br />';
       });
-      content = content + '</div>';
       popup.setContent(content);
     });
   }
