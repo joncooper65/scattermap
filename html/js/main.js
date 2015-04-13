@@ -10,7 +10,6 @@ require.config({
 require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerymobile, L, _){
   $(document).ready(function() {
     var map;
-    var features;
     var hasOpenPopups = false;
     var isVernacularNames = true;
     initialise();
@@ -27,7 +26,6 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
         tap: true,
       });
 
-      //Gorgeous map: http://jawj.github.io/OverlappingMarkerSpiderfier-Leaflet/demo.html
       L.tileLayer("http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", 
         {
           minZoom: 1, 
@@ -54,6 +52,7 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
     }
 
     function addRecords(){
+      if(!hasOpenPopups){
         var url = getGbifQuery();
         $.ajax({
             type: 'GET',
@@ -65,7 +64,7 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
             success: function(json) {
                 console.dir('Total number of toReturn: ' + json.count);
                 removeCurrentMarkers();
-                geojsonlayer = L.geoJson(getGeojson(json.results), {
+                L.geoJson(getGeojson(json.results), {
                     onEachFeature: onEachFeature
                 }).addTo(map);
             },
@@ -73,6 +72,7 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
                 console.log(e.message);
             }
         });
+      }
     }
 
     function getGbifQuery(){
@@ -85,17 +85,26 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
                      + '&callback=processtoReturn';
     }
 
+    /*
+    * Remove the current species markers only if there are no popups open.
+    * Note: it seems that the simplest way to detect if a layer on the map 
+    * is a species layer is to try to throw an exception by accessing the
+    * nested 'species' property.
+    */
     function removeCurrentMarkers(){
-       //How to remove just the geojson layers??
-       map.eachLayer(function(layer){
-        console.log(typeof layer);
-       });
-
-        if (typeof geojsonlayer != "undefined"){
-          if(!hasOpenPopups){
-            map.removeLayer(geojsonlayer);
+       if(!hasOpenPopups){
+         map.eachLayer(function(layer){
+          try{
+            if(!_.isUndefined(layer.feature.properties.species)){
+              console.log('removing layer');
+              map.removeLayer(layer);
+            }
+          }catch(e){
+            //Do nothing, since this was only thrown because the layer does not
+            //have the nested 'species' property we were looking for
           }
-        }
+         });
+       }
     }
 
     function onLocationError(e){
