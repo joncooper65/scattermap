@@ -1,6 +1,6 @@
 /*
 A script to populate mongo with geojson points randomly scattered with the bbox of the UK.
-To use it you need mongo running locally on default port, then open up a mongo console window and run load("mongoTestData.js") - add path as required
+To use it you need mongo running locally on default port, then open up a mongo console window (eg at linux prompt type mongo) and run load("mongoTestData.js") - add path as required
 The UK bbox I've used is: west -9.23, east 2.69, north 60.85, south 49.84
 
 Mongo installation: http://docs.mongodb.org/manual/tutorial/install-mongodb-on-ubuntu/
