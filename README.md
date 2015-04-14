@@ -17,6 +17,8 @@ will probably need to do: sudo ln -s /usr/bin/nodejs /usr/bin/node
 
 bower install
 
+mongodb install on linux: http://docs.mongodb.org/manual/tutorial/install-mongodb-on-ubuntu/
+
 NOTE
 ----
 http://askubuntu.com/questions/4983/what-are-ppas-and-how-do-i-use-them
