@@ -15,8 +15,15 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
     initialise();
 
     function initialise(){
+      var openStreetMap = 
+      L.tileLayer("http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", 
+        {
+          minZoom: 1, 
+          maxZoom: 17, 
+          attribution: "Map data copyright <a href='http://openstreetmap.org'>OpenStreetMap</a> contributors"
+        });
+
       map = L.map("map",{
-        zoom: 10,
         dragging: true,
         touchZoom: true,
         tap: false,
@@ -24,16 +31,9 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
         inertiaDeceleration: 3000,
         inertiaMaxSpeed: 1500,
         tap: true,
+        layers: [openStreetMap]
       });
-
-      L.tileLayer("http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", 
-        {
-          minZoom: 1, 
-          maxZoom: 20, 
-          attribution: "Map data copyright <a href='http://openstreetmap.org'>OpenStreetMap</a> contributors"
-        }
-      ).addTo(map);
-      map.locate({setView: true, zoom: 10});
+      map.locate({setView: true, zoom: 5});
       map.on("locationfound", onLocationFound);
       map.on("locationerror", onLocationError);
     }
@@ -96,7 +96,6 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
          map.eachLayer(function(layer){
           try{
             if(!_.isUndefined(layer.feature.properties.species)){
-              console.log('removing layer');
               map.removeLayer(layer);
             }
           }catch(e){
