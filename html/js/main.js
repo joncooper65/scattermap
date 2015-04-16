@@ -11,7 +11,7 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
   $(document).ready(function() {
     var map;
     var hasOpenPopups = false;
-    var isVernacularNames = true;
+    var isVernacularNames = false;//Show either vernacular (true) names in popup, or else scientific
     initialise();
 
     function initialise(){
@@ -114,9 +114,10 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
       hasOpenPopups = true;
       event.popup.setContent('Getting species...');
       if(isVernacularNames){
-        populatePopupWithVernacular(event.popup, event.target.feature.properties.taxonKey);
+        populatePopupWithVernacular(event.popup, event.target.feature.properties.species);
       }else{
-        event.popup.setContent(getPopupContentScientific(feature));      }
+        event.popup.setContent(getPopupContentScientific(event.target.feature));
+      }
     }
 
     function handlePopupClose(event){
@@ -137,34 +138,29 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
     }
 
     /*This takes the raw results from gbif and returns an array of geojson objects.
-    * The geojson objects of the array are unique on lat/long and each contains a property 
+    * The geojson objects of the array are unique on lat/long and contain the properties required
+    * for the placemarker - species list, species keys, latest year a property 
     * that is an array of species names found at that location.
     */
     function getGeojson(results){
       var geojsonResults = {};
-      _.each(results, function(elem){
-        if(elem.hasOwnProperty('species')){//Don't do it if this gbif record has no species name
-
-          var local = elem.decimalLongitude + '' + elem.decimalLatitude;
-          if(geojsonResults.hasOwnProperty(local)){
-            if(!_.contains(geojsonResults[local].properties.species, elem.species)){
-              geojsonResults[local].properties.species.push(elem.species);
-              geojsonResults[local].properties.taxonKey.push(elem.taxonKey);
-            }
+      _.each(results, function(gbifSpecies){
+        if(gbifSpecies.hasOwnProperty('species')){//Don't do it if this gbif record is not a species (ie might be higher taxon level)
+          var geohash = gbifSpecies.decimalLongitude + '' + gbifSpecies.decimalLatitude;
+          if(geojsonResults.hasOwnProperty(geohash)){
+            updateSpecies(gbifSpecies, geojsonResults[geohash].properties.species);
           }else{
-
-            geojsonResults[local] = {
+            geojsonResults[geohash] = {
               "type": "Feature",
-              "geometry": {"type": "Point", "coordinates": [elem.decimalLongitude, elem.decimalLatitude]},
-              "properties": {"species": [], "taxonKey": []}
+              "geometry": {"type": "Point", "coordinates": [gbifSpecies.decimalLongitude, gbifSpecies.decimalLatitude]},
+              "properties": {"species": []}
             };
-            geojsonResults[local].properties.species.push(elem.species);
-            geojsonResults[local].properties.taxonKey.push(elem.taxonKey);
+            geojsonResults[geohash].properties.species.push(getSpeciesFromGbif(gbifSpecies));
           }
         }
       });
       _.each(geojsonResults, function(elem){
-        elem.properties.species.sort();
+        _.sortBy(elem.properties.species, 'name');
       });
       var toReturn = [];
       _.map(geojsonResults, function(elem){
@@ -174,10 +170,30 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
     }
   });
 
-  function populatePopupWithVernacular(popup, taxonKeys){
+  function updateSpecies(gbifSpecies, speciesArray){
+    var species = _.findWhere(speciesArray, {taxonKey: gbifSpecies.taxonKey})
+    if(_.isUndefined(species)){
+      speciesArray.push(getSpeciesFromGbif(gbifSpecies));
+    }else{
+      if(!_.contains(species.datasetKeys, gbifSpecies.datasetKey)){
+        species.datasetKeys.push(gbifSpecies.datasetKey);
+      }
+      if(species.year < gbifSpecies.year){
+        species.year = gbifSpecies.year;
+      }
+    }
+  }
+
+  function getSpeciesFromGbif(gbifSpecies){
+    var species = {"taxonKey": gbifSpecies.taxonKey, "name": gbifSpecies.species, "year": gbifSpecies.year, "datasetKeys": []};
+    species.datasetKeys.push(species.datasetKey);
+    return species;
+  }
+
+  function populatePopupWithVernacular(popup, speciess){
     var deferreds = [];
-    _.each(taxonKeys, function(taxonKey){
-      deferreds.push(getVernacularName(taxonKey));
+    _.each(speciess, function(species){
+      deferreds.push(getVernacularName(species.taxonKey));
     });
     $.when.apply($, deferreds).done(function(){
       var vernacularNames = [];
@@ -224,7 +240,7 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
     var popupContent = '<div class="popup-content">';
      if(feature.properties && feature.properties.species){
         _.each(feature.properties.species, function(species){
-          popupContent = popupContent + species + '<br \>';
+          popupContent = popupContent + species.name + ' (' + species.year + ')<br \>';
         });
       }
     popupContent = popupContent + '</div>';
