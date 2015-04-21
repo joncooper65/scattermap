@@ -160,7 +160,7 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
         }
       });
       _.each(geojsonResults, function(elem){
-        _.sortBy(elem.properties.species, 'name');
+        elem.properties.species = _.sortBy(elem.properties.species,'name');
       });
       var toReturn = [];
       _.map(geojsonResults, function(elem){
