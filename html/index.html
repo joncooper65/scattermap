@@ -2,26 +2,45 @@
 <html>
 	<head>
 		<meta name="viewport" content="width=device-width,  initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no"/>
-<!--	 	<link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css" />-->
 		<link rel="stylesheet" href="/vendor/leaflet/dist/leaflet.css" />
-<!--		<link rel="stylesheet" href="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.css" />-->
-		<link rel="stylesheet" href="/vendor/jquery-mobile-bower/css/jquery.mobile-1.4.2.min.css" />
-		<link rel="stylesheet" href="/css/style.css" />
-
-<!--		<script src="/vendor/jquery/dist/jquery.min.js"></script>
-		<script type="text/javascript" src="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.js"></script>
-		<script src="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.js"></script>
-		<script type="text/javascript" src="/js/main.js"></script>-->
+	  <link rel="stylesheet" href="/vendor/jquery-mobile-bower/css/jquery.mobile-1.4.2.min.css" />
+	  <link rel="stylesheet" href="/css/style.css" />
 
 		<script data-main="/js/main" src="/vendor/requirejs/require.js"></script>
 	</head>
 	<body>
-		<div data-role="page" id="index">
-			<div data-theme="b" data-role="header">
-				<h1>Species</h1>
+		<div data-theme="a" data-role="page" id="index">
+			<div data-role="header">
+				<h1>Biodiversity obs</h1>
+    		<a href='#settings' data-icon="bars" class="ui-btn-right">&nbsp;</a>
 			</div>
 			<div data-role="content" id="map-page">
 				<div id="map"></div>
+			</div>
+		</div>
+
+		<div data-theme="a" data-role="page" id="settings">
+			<div data-role="header">
+				<h1>Settings</h1>
+    		<a href='#index' data-icon="arrow-l" class="ui-btn-right">Map</a>
+			</div>
+			<div data-role="content">
+				<form>
+					<ul data-role="listview" data-inset="true">
+		        <li class="ui-field-contain">
+					    <label for="flip-names">Species name preference:</label>
+					    <div class="settings-input">
+					    	<input type="checkbox" data-role="flipswitch" name="flip-names" id="flip-checkbox-3" checked="" data-on-text="Scientific" data-off-text="Common" data-wrapper-class="names-flipswitch">
+					  </div>
+		        </li>
+		        <li class="ui-field-contain">
+					    <label for="flip-names">Recent or historic record preference:</label>
+					    <div class="settings-input">
+					    	<input type="checkbox" data-role="flipswitch" name="flip-names" id="flip-checkbox-4" checked="" data-on-text="Since 2000" data-off-text="Since 1900" data-wrapper-class="dates-flipswitch">
+					  </div>
+		        </li>
+					</ul>
+				</form>
 			</div>
 		</div>
 	</body>
