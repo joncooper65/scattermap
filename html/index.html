@@ -30,14 +30,12 @@
 		        <li class="ui-field-contain">
 					    <label for="flip-names">Species name preference:</label>
 					    <div class="settings-input">
-					    	<input type="checkbox" data-role="flipswitch" name="flip-names" id="flip-checkbox-3" checked="" data-on-text="Scientific" data-off-text="Common" data-wrapper-class="names-flipswitch">
+					    	<input type="checkbox" data-role="flipswitch" name="flip-name" id="flip-name" checked="" data-on-text="Scientific" data-off-text="Common" data-wrapper-class="names-flipswitch">
 					  </div>
 		        </li>
 		        <li class="ui-field-contain">
-					    <label for="flip-names">Recent or historic record preference:</label>
-					    <div class="settings-input">
-					    	<input type="checkbox" data-role="flipswitch" name="flip-names" id="flip-checkbox-4" checked="" data-on-text="Since 2000" data-off-text="Since 1900" data-wrapper-class="dates-flipswitch">
-					  </div>
+							<label for="slider-year">Start year:</label>
+							<input type="range" name="slider-year" id="slider-year" value="1900" min="1900" max="2015">
 		        </li>
 					</ul>
 				</form>

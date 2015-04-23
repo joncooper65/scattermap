@@ -11,10 +11,16 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
   $(document).ready(function() {
     var map;
     var hasOpenPopups = false;
-    var isVernacularNames = false;//Show either vernacular (true) names in popup, or else scientific
+    var isScientificNames = true;//Show either vernacular (false) names in popup, or else scientific
+    var startYear = 1900;//Don't get records before this year
     initialise();
 
     function initialise(){
+      initialiseEvents();
+      initialiseMap();
+    }
+
+    function initialiseMap(){
       var openStreetMap = 
       L.tileLayer("http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", 
         {
@@ -38,6 +44,19 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
       map.on("locationerror", onLocationError);
     }
 
+    function initialiseEvents(){
+      $('#flip-name').change(function(){
+        isScientificNames = $(this).is(':checked');
+      });
+
+      //Update the map with the new year after the year slider has been used
+      $('#slider-year').parent().mouseup(function(){
+        startYear = $('#slider-year').val();
+        removeCurrentMarkers();
+        addRecords();
+      });
+    }
+
     function onLocationFound(e){
       addRecords();
 
@@ -53,11 +72,11 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
 
     function addRecords(){
       if(!hasOpenPopups){
+        doLoading();
         var url = getGbifQuery();
         $.ajax({
             type: 'GET',
             url: url,
-            async: false,
             jsonpCallback: 'processtoReturn',
             contentType: "application/json",
             dataType: 'jsonp',
@@ -67,20 +86,36 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
                 L.geoJson(getGeojson(json.results), {
                     onEachFeature: onEachFeature
                 }).addTo(map);
+                $.mobile.loading( "hide" );
             },
             error: function(e) {
                 console.log(e.message);
+                $.mobile.loading( "hide" );
             }
         });
       }
     }
 
+
+    function doLoading(){
+      $.mobile.loading( "show", {
+        theme: "b",
+        textonly: false,
+        html: ""
+      });
+    }
+
+    /* Returns the GET url for the gbif records
+       It only adds a year range if the startYear isn't 1900, otherwise it assumes all records are to be returned - 
+       this is because year range queries are quite a bit slower.
+    */
     function getGbifQuery(){
         bounds = map.getBounds();
-        return 'http://api.gbif.org/v1/occurrence/search?decimalLongitude=' 
+        return  'http://api.gbif.org/v1/occurrence/search?decimalLongitude=' 
                      + bounds.getWest() + ',' + bounds.getEast() + '&'
                      + '&decimalLatitude=' + bounds.getSouth() + ',' + bounds.getNorth()
                      + '&hasCoordinate=true'
+                     + ((startYear != 1900) ? '&year=' + startYear + ',' + new Date().getFullYear() : '')
                      + '&limit=300'
                      + '&callback=processtoReturn';
     }
@@ -113,10 +148,10 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
     function handlePopupOpen(event){
       hasOpenPopups = true;
       event.popup.setContent('Getting species...');
-      if(isVernacularNames){
-        populatePopupWithVernacular(event.popup, event.target.feature.properties.species);
-      }else{
+      if(isScientificNames){
         event.popup.setContent(getPopupContentScientific(event.target.feature));
+      }else{
+        populatePopupWithVernacular(event.popup, event.target.feature.properties.species);
       }
     }
 
