@@ -13,6 +13,9 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
     var hasOpenPopups = false;
     var isScientificNames = true;//Show either vernacular (false) names in popup, or else scientific
     var startYear = 1900;//Don't get records before this year
+    var totalNumRecords = 0;//Total number of records that are available from gbif for current region - used for paging
+    var limit = 300;//Number of records per page
+    var offset = limit;//Index of last record from gbif - used for paging
     initialise();
 
     function initialise(){
@@ -53,27 +56,37 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
       $('#slider-year').parent().mouseup(function(){
         startYear = $('#slider-year').val();
         removeCurrentMarkers();
-        addRecords();
+        addRecords(false);
+      });
+
+      //Add more records
+      $('#add-more-records').click(function(){
+        if(offset >= totalNumRecords){
+          $('#no-more-records-popup').popup('open');
+        } else {
+          offset = offset + limit;
+          addRecords(true);
+        }
       });
     }
 
     function onLocationFound(e){
-      addRecords();
+      addRecords(false);
 
       map.on("movestart", function(e){});
 
       map.on("move", function(e){});
 
       map.on("moveend", function(e){
-      	addRecords();
+      	addRecords(false);
       });
 
     }
 
-    function addRecords(){
+    function addRecords(isAddMoreRecords){
       if(!hasOpenPopups){
         doLoading();
-        var url = getGbifQuery();
+        var url = getGbifQuery(isAddMoreRecords);
         $.ajax({
             type: 'GET',
             url: url,
@@ -81,18 +94,29 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
             contentType: "application/json",
             dataType: 'jsonp',
             success: function(json) {
-                console.dir('Total number of toReturn: ' + json.count);
-                removeCurrentMarkers();
+                totalNumRecords = json.count;
+                if(!isAddMoreRecords){
+                  removeCurrentMarkers();
+                }
                 L.geoJson(getGeojson(json.results), {
                     onEachFeature: onEachFeature
                 }).addTo(map);
                 $.mobile.loading( "hide" );
+                $('#add-more-records').text(moreRecordsText());
             },
             error: function(e) {
                 console.log(e.message);
                 $.mobile.loading( "hide" );
             }
         });
+      }
+    }
+
+    function moreRecordsText(){
+      if(offset > totalNumRecords){
+        return totalNumRecords + ' of ' + totalNumRecords;
+      } else {
+        return offset + ' of ' + totalNumRecords;
       }
     }
 
@@ -109,15 +133,16 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
        It only adds a year range if the startYear isn't 1900, otherwise it assumes all records are to be returned - 
        this is because year range queries are quite a bit slower.
     */
-    function getGbifQuery(){
-        bounds = map.getBounds();
-        return  'http://api.gbif.org/v1/occurrence/search?decimalLongitude=' 
-                     + bounds.getWest() + ',' + bounds.getEast() + '&'
-                     + '&decimalLatitude=' + bounds.getSouth() + ',' + bounds.getNorth()
-                     + '&hasCoordinate=true'
-                     + ((startYear != 1900) ? '&year=' + startYear + ',' + new Date().getFullYear() : '')
-                     + '&limit=300'
-                     + '&callback=processtoReturn';
+    function getGbifQuery(isAddMoreRecords){
+      bounds = map.getBounds();
+      return  'http://api.gbif.org/v1/occurrence/search?decimalLongitude=' 
+                   + bounds.getWest() + ',' + bounds.getEast() + '&'
+                   + '&decimalLatitude=' + bounds.getSouth() + ',' + bounds.getNorth()
+                   + '&hasCoordinate=true'
+                   + ((startYear != 1900) ? '&year=' + startYear + ',' + new Date().getFullYear() : '')
+                   + '&limit=' + limit
+                   + ((isAddMoreRecords) ? '&offset=' + offset : '')
+                   + '&callback=processtoReturn';
     }
 
     /*
@@ -127,6 +152,7 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
     * nested 'species' property.
     */
     function removeCurrentMarkers(){
+      offset = limit;
        if(!hasOpenPopups){
          map.eachLayer(function(layer){
           try{
@@ -166,7 +192,7 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
           autoPan: true,
           keepInView: true
         }, layer);
-      layer.bindPopup(popup);
+      layer.bindPopup(popup, {className: 'map-popup'});
 
       layer.on('popupopen', handlePopupOpen);
       layer.on('popupclose', handlePopupClose);
@@ -262,12 +288,13 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
 
   function getVernacularName(taxonKey){
     var url = 'http://api.gbif.org/v1/species/' + taxonKey;
+    console.log(url);
     return $.ajax({
       type: 'GET',
       url: url,
       async: true,
       contentType: "application/json",
-      dataType: 'jsonp',
+      dataType: 'jsonp'
     });
   }
 

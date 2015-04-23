@@ -9,9 +9,13 @@
 		<script data-main="/js/main" src="/vendor/requirejs/require.js"></script>
 	</head>
 	<body>
-		<div data-theme="a" data-role="page" id="index">
+		<div data-theme="b" data-role="page" id="index">
 			<div data-role="header">
-				<h1>Biodiversity obs</h1>
+    		<a href='#' data-icon="plus" id='add-more-records' class="ui-btn-left">&nbsp;</a>
+				<div data-role="popup" id="no-more-records-popup">
+					<p>There are no more records to add.</p>
+				</div>
+				<h1>Wildlife records</h1>
     		<a href='#settings' data-icon="bars" class="ui-btn-right">&nbsp;</a>
 			</div>
 			<div data-role="content" id="map-page">
@@ -19,7 +23,7 @@
 			</div>
 		</div>
 
-		<div data-theme="a" data-role="page" id="settings">
+		<div data-theme="b" data-role="page" id="settings">
 			<div data-role="header">
 				<h1>Settings</h1>
     		<a href='#index' data-icon="arrow-l" class="ui-btn-right">Map</a>
