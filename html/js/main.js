@@ -16,6 +16,9 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
     var totalNumRecords = 0;//Total number of records that are available from gbif for current region - used for paging
     var limit = 300;//Number of records per page
     var offset = limit;//Index of last record from gbif - used for paging
+    var waitingForRecords = false;//Don't fire any other requests if this is true - helps with map panning
+    var boundingBoxOfRecords;//Used to track the bbox of the current set of species records, primarily to refresh the records if the map bounding box is different
+    
     initialise();
 
     function initialise(){
@@ -78,14 +81,17 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
       map.on("move", function(e){});
 
       map.on("moveend", function(e){
-      	addRecords(false);
+        if(!waitingForRecords){
+      	 addRecords(false);
+        } 
       });
-
     }
 
     function addRecords(isAddMoreRecords){
+      boundingBoxOfRecords = getBoundsString(map);
       if(!hasOpenPopups){
         doLoading();
+        waitingForRecords = true;
         var url = getGbifQuery(isAddMoreRecords);
           $.ajax({
               type: 'GET',
@@ -94,29 +100,36 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
               contentType: "application/json",
               dataType: 'jsonp',
               success: function(json) {
-                  totalNumRecords = json.count;
-                  if(!isAddMoreRecords){
-                    removeCurrentMarkers();
-                  }
-                  L.geoJson(getGeojson(json.results), {
-                      onEachFeature: onEachFeature,
-                      pointToLayer: function(feature, latlng){
-                        var iconColor = 'blue';
-                        if(feature.properties.species.length > 50){
-                          iconColor = 'red';
-                        }
-                        var icon = L.icon({
-                                        iconUrl: 'vendor/leaflet/dist/images/marker-icon-' + iconColor + '.png'
-                        });
-                        return L.marker(latlng, {icon: icon});
+                waitingForRecords = false;
+                totalNumRecords = json.count;
+                if(!isAddMoreRecords){
+                  removeCurrentMarkers();
+                }
+                L.geoJson(getGeojson(json.results), {
+                    onEachFeature: onEachFeature,
+                    pointToLayer: function(feature, latlng){
+                      var iconColor = 'blue';
+                      if(feature.properties.species.length > 50){
+                        iconColor = 'red';
                       }
-                  }).addTo(map);
-                  $.mobile.loading( "hide" );
-                  $('#add-more-records').text(moreRecordsText());
+                      var icon = L.icon({
+                                      iconUrl: 'vendor/leaflet/dist/images/marker-icon-' + iconColor + '.png'
+                      });
+                      return L.marker(latlng, {icon: icon});
+                    }
+                }).addTo(map);
+                $.mobile.loading( "hide" );
+                $('#add-more-records').text(moreRecordsText());
               },
               error: function(e) {
-                console.log(e.getResponseHeader());
+                waitingForRecords = false;
                 $.mobile.loading( "hide" );
+                console.log(e.getResponseHeader());
+              },
+              complete: function(e){
+                if(boundingBoxOfRecords !== getBoundsString(map)){
+                  addRecords(false);
+                }
               }
           });
       }
@@ -144,7 +157,7 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
        this is because year range queries are quite a bit slower.
     */
     function getGbifQuery(isAddMoreRecords){
-      bounds = map.getBounds();
+      var bounds = map.getBounds();
       return  'http://api.gbif.org/v1/occurrence/search?decimalLongitude=' 
                    + bounds.getWest() + ',' + bounds.getEast() + '&'
                    + '&decimalLatitude=' + bounds.getSouth() + ',' + bounds.getNorth()
@@ -324,6 +337,11 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
       }
     popupContent = popupContent + '</div>';
     return popupContent;
+  }
+
+  function getBoundsString(map){
+    var bounds = map.getBounds();
+    return '' + bounds.getNorth() + bounds.getSouth() + bounds.getEast() + bounds.getWest();
   }
 
 });
