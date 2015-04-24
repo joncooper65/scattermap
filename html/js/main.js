@@ -108,12 +108,8 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
                 L.geoJson(getGeojson(json.results), {
                     onEachFeature: onEachFeature,
                     pointToLayer: function(feature, latlng){
-                      var iconColor = 'blue';
-                      if(feature.properties.species.length > 50){
-                        iconColor = 'red';
-                      }
                       var icon = L.icon({
-                                      iconUrl: 'vendor/leaflet/dist/images/marker-icon-' + iconColor + '.png'
+                                    iconUrl: 'images/marker-icon-green-' + getIconIndex(feature.properties.species.length) + '.png'
                       });
                       return L.marker(latlng, {icon: icon});
                     }
@@ -342,6 +338,18 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
   function getBoundsString(map){
     var bounds = map.getBounds();
     return '' + bounds.getNorth() + bounds.getSouth() + bounds.getEast() + bounds.getWest();
+  }
+
+  function getIconIndex(numSpecies){
+    if (numSpecies < 11){
+      return 2;
+    } else if (numSpecies > 10 && numSpecies < 21){
+      return 3;
+    } else if (numSpecies > 20 && numSpecies < 31){
+      return 4;
+    } else {
+      return 5;
+    }
   }
 
 });
