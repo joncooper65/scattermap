@@ -87,28 +87,38 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
       if(!hasOpenPopups){
         doLoading();
         var url = getGbifQuery(isAddMoreRecords);
-        $.ajax({
-            type: 'GET',
-            url: url,
-            jsonpCallback: 'processtoReturn',
-            contentType: "application/json",
-            dataType: 'jsonp',
-            success: function(json) {
-                totalNumRecords = json.count;
-                if(!isAddMoreRecords){
-                  removeCurrentMarkers();
-                }
-                L.geoJson(getGeojson(json.results), {
-                    onEachFeature: onEachFeature
-                }).addTo(map);
+          $.ajax({
+              type: 'GET',
+              url: url,
+              jsonpCallback: 'processtoReturn',
+              contentType: "application/json",
+              dataType: 'jsonp',
+              success: function(json) {
+                  totalNumRecords = json.count;
+                  if(!isAddMoreRecords){
+                    removeCurrentMarkers();
+                  }
+                  L.geoJson(getGeojson(json.results), {
+                      onEachFeature: onEachFeature,
+                      pointToLayer: function(feature, latlng){
+                        var iconColor = 'blue';
+                        if(feature.properties.species.length > 50){
+                          iconColor = 'red';
+                        }
+                        var icon = L.icon({
+                                        iconUrl: 'vendor/leaflet/dist/images/marker-icon-' + iconColor + '.png'
+                        });
+                        return L.marker(latlng, {icon: icon});
+                      }
+                  }).addTo(map);
+                  $.mobile.loading( "hide" );
+                  $('#add-more-records').text(moreRecordsText());
+              },
+              error: function(e) {
+                console.log(e.getResponseHeader());
                 $.mobile.loading( "hide" );
-                $('#add-more-records').text(moreRecordsText());
-            },
-            error: function(e) {
-                console.log(e.message);
-                $.mobile.loading( "hide" );
-            }
-        });
+              }
+          });
       }
     }
 
@@ -193,7 +203,6 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
           keepInView: true
         }, layer);
       layer.bindPopup(popup, {className: 'map-popup'});
-
       layer.on('popupopen', handlePopupOpen);
       layer.on('popupclose', handlePopupClose);
     }
@@ -288,13 +297,21 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
 
   function getVernacularName(taxonKey){
     var url = 'http://api.gbif.org/v1/species/' + taxonKey;
-    console.log(url);
     return $.ajax({
-      type: 'GET',
-      url: url,
-      async: true,
-      contentType: "application/json",
-      dataType: 'jsonp'
+                type: 'GET',
+                url: url,
+                async: true,
+                contentType: "application/json",
+                dataType: 'jsonp',
+                error: function(e) {
+                  $.mobile.loading( "hide" );
+                  console.log(e.getResponseHeader());
+                },
+                statusCode: {
+                  503: function(){
+                    console.log('gbif service failed to respond');
+                  }
+                }
     });
   }
 
