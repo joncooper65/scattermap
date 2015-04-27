@@ -313,7 +313,7 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
     var popupContent = '<div class="popup-content">';
      if(feature.properties && feature.properties.species){
         _.each(feature.properties.species, function(species){
-          var speciesLink = '<a href="#species-info?datasetKeys=' + species.datasetKeys.join(',') + '&taxonKey=' + species.taxonKey + '">' + species.name + '</a>';
+          var speciesLink = '<a href="#species-info-page?datasetKeys=' + species.datasetKeys.join(',') + '&taxonKey=' + species.taxonKey + '">' + species.name + '</a>';
           popupContent = popupContent + speciesLink + ' (' + species.year + ')<br \>';
         });
       }
@@ -367,7 +367,7 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
 
   function updateSpeciesInfoPageContent(){
     $(document).on('pagecontainerbeforetransition', function(e, data){
-      if ($.type(data.toPage) !== 'undefined' && $.type(data.absUrl) !== 'undefined' && data.toPage[0].id == 'species-info') {
+      if ($.type(data.toPage) !== 'undefined' && $.type(data.absUrl) !== 'undefined' && data.toPage[0].id == 'species-info-page') {
         var params = getParams(data.absUrl);
         addDatasetContent(params.datasetKeys, data);
         addTaxonomyContent(params.taxonKey, data);
@@ -388,18 +388,22 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
         var dataset = {"datasetKey": deferred.responseJSON.key,
                         "providerKey" : deferred.responseJSON.publishingOrganizationKey,
                         "title": deferred.responseJSON.title,
-                        "description": deferred.responseJSON.description};
+                        "description": deferred.responseJSON.description,
+                        "website": deferred.responseJSON.homepage};
         datasets.push(dataset);
       });
       datasetsSorted = _.sortBy(datasets,'title');
-      datasetContent = '<ul>';
+      datasetContent = '<ul data-role="listview" data-inset="true">';
       _.each(datasetsSorted, function(dataset){
-        datasetContent += '<li><h4>' + dataset.title + '</h4>' + 
-                          dataset.description + '</li>'
+        datasetContent += '<li><h2>' + dataset.title + '</h2>' +
+                          'Add Organisation' +
+                          '<p>' + dataset.description + '</p>' +
+                          '<p><a href="' + dataset.website + '">' + dataset.website + '</a></p>' +
+                          '</li>'
       });
       datasetContent += '</ul>'
       $('#dataset-info', data.toPage).html(datasetContent);
-      $('#species-info').enhanceWithin();
+      $('#species-info-page').enhanceWithin();
     });
   }
 
@@ -410,8 +414,8 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
       if(!_.isUndefined(deferred.responseJSON.vernacularName)){
         taxonomyContent += ' (' + deferred.responseJSON.vernacularName + ')';
       }
-      $('#taxonomy-info', data.toPage).html(taxonomyContent);
-      $('#species-info').enhanceWithin();
+      $('#species-name', data.toPage).html(taxonomyContent);
+      $('#species-info-page').enhanceWithin();
     });
   }
 

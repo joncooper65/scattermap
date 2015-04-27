@@ -46,17 +46,16 @@
 			</div>
 		</div>
 
-		<div data-role="page" id="species-info" data-theme="b">
+		<div data-role="page" id="species-info-page" data-theme="b">
 			<header data-role="header" data-theme="b" data-add-back-btn="true" data-back-btn-text="Map">
 				<h1>Observation info</h1>
 			</header>
-			<div data-role="content">
-				<div id="taxonomy-info"></div>
-				<div>
-					was recorded at this location in the following datasets
+			<div data-role="content" class="species-info-content">
+				<h3 id="species-name"></h3>
+				<div class="compensate-for-jqm-listview-negative-margin">
+					has records at this location from the following datasets
 				</div>
-				<div id="dataset-info">
-				</div>
+				<div id="dataset-info"></div>
 			</div>
 		</div>
 	</body>
