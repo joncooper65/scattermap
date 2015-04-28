@@ -19,7 +19,7 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
     var offset = limit;//Index of last record from gbif - used for paging
     var waitingForRecords = false;//Don't fire any other requests if this is true - helps with map panning
     var boundingBoxOfRecords;//Used to track the bbox of the current set of species records, primarily to refresh the records if the map bounding box is different
-    var geojsonResults = {};//Data for current view
+    var geojsonResults = {};//Data model for current view
 
     initialise();
 
@@ -81,7 +81,7 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
         if ($.type(data.toPage) !== 'undefined' && $.type(data.absUrl) !== 'undefined' && data.toPage[0].id == 'species-info-page') {
           var params = getParams(data.absUrl);
           addDatasetContent(params.datasetKeys, data);
-          addTaxonomyContent(params.taxonKey, data, isScientificNames);
+          addTaxonomyContent(params, data, isScientificNames);
         }
       });
     }
@@ -118,7 +118,8 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
                 if(!isAddMoreRecords){
                   removeCurrentMarkers();
                 }
-                L.geoJson(getGeojson(json.results), {
+                updateGeojsonModel(json.results);
+                L.geoJson(getGeojson(geojsonResults), {
                     onEachFeature: onEachFeature,
                     pointToLayer: function(feature, latlng){
                       var icon = L.icon({
@@ -229,12 +230,12 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
       layer.on('popupclose', handlePopupClose);
     }
 
-    /*This takes the raw results from gbif and returns an array of geojson objects.
-    * The geojson objects of the array are unique on lat/long and contain the properties required
-    * for the placemarker - species list, species keys, latest year a property 
-    * that is an array of species names found at that location.
+    /*This takes the raw results from gbif and updates the geojsonResults model with geojson objects.
+    * The geojsonResults object uses the hash of the lat/lon to map the geojson objects we are maintaining.
+    * So each geojson object is unique on lat/long and contains the properties required
+    * for the placemarker - species list, species keys, earliest and latest year a properties.
     */
-    function getGeojson(results){
+    function updateGeojsonModel(results){
       _.each(results, function(gbifSpecies){
         if(gbifSpecies.hasOwnProperty('species')){//Don't do it if this gbif record is not a species (ie might be higher taxon level)
           var geohash = gbifSpecies.decimalLongitude + '' + gbifSpecies.decimalLatitude;
@@ -253,13 +254,21 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
       _.each(geojsonResults, function(elem){
         elem.properties.species = _.sortBy(elem.properties.species,'name');
       });
-      var toReturn = [];
-      _.map(geojsonResults, function(elem){
-        toReturn.push(elem);
-      });
-      return toReturn;
     }
   });
+
+
+    /*This returns an array of geojson objects from the geojasonResults model in a form ready for leaflet.
+    * The geojson objects of the array are unique on lat/long and contain the properties required
+    * for the placemarker - species list, species keys, earlies and latest year a properties.
+    */
+  function getGeojson(geojsonResults){
+    var toReturn = [];
+    _.map(geojsonResults, function(elem){
+      toReturn.push(elem);
+    });
+    return toReturn;
+  }
 
   function updateSpecies(gbifSpecies, speciesArray){
     var species = _.findWhere(speciesArray, {taxonKey: gbifSpecies.taxonKey})
@@ -269,14 +278,17 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
       if(!_.contains(species.datasetKeys, gbifSpecies.datasetKey)){
         species.datasetKeys.push(gbifSpecies.datasetKey);
       }
-      if(species.year < gbifSpecies.year){
-        species.year = gbifSpecies.year;
+      if(species.latestYear < gbifSpecies.year){
+        species.latestYear = gbifSpecies.year;
+      }
+      if(species.earliestYear > gbifSpecies.year){
+        species.earliestYear = gbifSpecies.year;
       }
     }
   }
 
   function getSpeciesFromGbif(gbifSpecies){
-    var species = {"taxonKey": gbifSpecies.taxonKey, "name": gbifSpecies.species, "year": gbifSpecies.year, "datasetKeys": []};
+    var species = {"taxonKey": gbifSpecies.taxonKey, "name": gbifSpecies.species, "earliestYear": gbifSpecies.year, "latestYear": gbifSpecies.year, "datasetKeys": []};
     species.datasetKeys.push(gbifSpecies.datasetKey);
     return species;
   }
@@ -340,8 +352,8 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
     var popupContent = '<div class="popup-content">';
      if(feature.properties && feature.properties.species){
         _.each(feature.properties.species, function(species){
-          var speciesLink = '<a href="#species-info-page?datasetKeys=' + species.datasetKeys.join(',') + '&taxonKey=' + species.taxonKey + '">' + species.name + '</a>';
-          popupContent = popupContent + speciesLink + ' (' + species.year + ')<br \>';
+          var speciesLink = '<a href="#species-info-page?datasetKeys=' + species.datasetKeys.join(',') + '&taxonKey=' + species.taxonKey + '&earliest=' + species.earliestYear + '&latest=' + species.latestYear + '">' + species.name + '</a>';
+          popupContent = popupContent + speciesLink + '<br \>';
         });
       }
     popupContent = popupContent + '</div>';
@@ -392,8 +404,8 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
     });
   }
 
-  function addTaxonomyContent(taxonKey, data, isScientificNames){
-    var deferred = getTaxonomy(taxonKey);
+  function addTaxonomyContent(params, data, isScientificNames){
+    var deferred = getTaxonomy(params.taxonKey);
     deferred.done(function(){
       var scientificName = deferred.responseJSON.species;
       var vernacularName = deferred.responseJSON.vernacularName;
@@ -407,8 +419,17 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
       }
       $('#species-name-title', data.toPage).html(speciesNameTitle);
       $('#species-name-intro', data.toPage).html(speciesNameIntro);
+      $('#species-info-date', data.toPage).html(getYearText(params));
       $('#species-info-page').enhanceWithin();
     });
+  }
+
+  function getYearText(params){
+    if(params.earliestYear == params.latestYear){
+      return 'Year observed: ' + params.earliest;
+    } else {
+      return 'Earliest observation: ' + params.earliest + ', latest observation: ' + params.latest;
+    }
   }
 
   function getDatasetInfo(datasetKey){
