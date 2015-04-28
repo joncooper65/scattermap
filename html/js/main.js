@@ -52,10 +52,37 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
     }
 
     function initialiseEvents(){
-      namePreferenceChange();
-      yearSliderChange();
-      addMoreRecordsClick();
-      updateSpeciesInfoPageContent();
+      //namePreferenceChange
+      $('#flip-name').change(function(){
+        isScientificNames = $(this).is(':checked');
+      });
+
+      //Update the map with the new year after the year slider has been used
+      $('#slider-year').parent().mouseup(function(){
+        startYear = $('#slider-year').val();
+        removeCurrentMarkers();
+        addRecords(false);
+      });
+
+
+      //Handle the 'add more records' click event
+      $('#add-more-records').click(function(){
+        if(offset >= totalNumRecords){
+          $('#no-more-records-popup').popup('open');
+        } else {
+          offset = offset + limit;
+          addRecords(true);
+        }
+      });
+
+      //updateSpeciesInfoPageContent
+      $(document).on('pagecontainerbeforetransition', function(e, data){
+        if ($.type(data.toPage) !== 'undefined' && $.type(data.absUrl) !== 'undefined' && data.toPage[0].id == 'species-info-page') {
+          var params = getParams(data.absUrl);
+          addDatasetContent(params.datasetKeys, data);
+          addTaxonomyContent(params.taxonKey, data, isScientificNames);
+        }
+      });
     }
 
     function onLocationFound(e){
@@ -123,7 +150,6 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
         return offset + ' of ' + totalNumRecords;
       }
     }
-
 
     function doLoading(){
       $.mobile.loading( "show", {
@@ -338,43 +364,6 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
     }
   }
 
-  function namePreferenceChange(){
-    $('#flip-name').change(function(){
-      isScientificNames = $(this).is(':checked');
-    });
-  }
-
-  //Update the map with the new year after the year slider has been used
-  function yearSliderChange(){
-    $('#slider-year').parent().mouseup(function(){
-      startYear = $('#slider-year').val();
-      removeCurrentMarkers();
-      addRecords(false);
-    });
-  }
-
-  //Handle the 'add more records' click event
-  function  addMoreRecordsClick(){
-    $('#add-more-records').click(function(){
-      if(offset >= totalNumRecords){
-        $('#no-more-records-popup').popup('open');
-      } else {
-        offset = offset + limit;
-        addRecords(true);
-      }
-    });
-  }
-
-  function updateSpeciesInfoPageContent(){
-    $(document).on('pagecontainerbeforetransition', function(e, data){
-      if ($.type(data.toPage) !== 'undefined' && $.type(data.absUrl) !== 'undefined' && data.toPage[0].id == 'species-info-page') {
-        var params = getParams(data.absUrl);
-        addDatasetContent(params.datasetKeys, data);
-        addTaxonomyContent(params.taxonKey, data);
-      }
-    });
-  }
-
   function addDatasetContent(datasetKeysCSV, data){
     var deferreds = [];
     var datasetContent = '';
@@ -384,7 +373,6 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
     var datasets = [];
     $.when.apply($, deferreds).done(function(){
       _.each(deferreds, function(deferred){
-        console.log(deferred.responseJSON);
         var dataset = {"datasetKey": deferred.responseJSON.key,
                         "providerKey" : deferred.responseJSON.publishingOrganizationKey,
                         "title": deferred.responseJSON.title,
@@ -407,14 +395,21 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
     });
   }
 
-  function addTaxonomyContent(taxonKey, data){
+  function addTaxonomyContent(taxonKey, data, isScientificNames){
     var deferred = getTaxonomy(taxonKey);
     deferred.done(function(){
-      var taxonomyContent = '<i>' + deferred.responseJSON.species + '</i>';
-      if(!_.isUndefined(deferred.responseJSON.vernacularName)){
-        taxonomyContent += ' (' + deferred.responseJSON.vernacularName + ')';
+      var scientificName = deferred.responseJSON.species;
+      var vernacularName = deferred.responseJSON.vernacularName;
+      var speciesNameTitle = '<i>' + scientificName + '</i>';
+      var speciesNameIntro = speciesNameTitle;
+      if(!_.isUndefined(vernacularName)){
+        speciesNameTitle += ' (' + vernacularName + ')';
       }
-      $('#species-name', data.toPage).html(taxonomyContent);
+      if(!isScientificNames && !_.isUndefined(vernacularName)){
+        speciesNameIntro = vernacularName;
+      }
+      $('#species-name-title', data.toPage).html(speciesNameTitle);
+      $('#species-name-intro', data.toPage).html(speciesNameIntro);
       $('#species-info-page').enhanceWithin();
     });
   }
