@@ -84,6 +84,11 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
           addTaxonomyContent(params, data, isScientificNames);
         }
       });
+
+      //Handle geolocation event
+      $('#geolocate-button').click(function(){
+        map.locate({setView: true, zoom: 5});
+      });
     }
 
     function onLocationFound(e){
