@@ -19,7 +19,8 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
     var offset = limit;//Index of last record from gbif - used for paging
     var waitingForRecords = false;//Don't fire any other requests if this is true - helps with map panning
     var boundingBoxOfRecords;//Used to track the bbox of the current set of species records, primarily to refresh the records if the map bounding box is different
-    
+    var geojsonResults = {};//Data for current view
+
     initialise();
 
     function initialise(){
@@ -184,7 +185,8 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
     function removeCurrentMarkers(){
       offset = limit;
        if(!hasOpenPopups){
-         map.eachLayer(function(layer){
+          geojsonResults = {};
+          map.eachLayer(function(layer){
           try{
             if(!_.isUndefined(layer.feature.properties.species)){
               map.removeLayer(layer);
@@ -233,7 +235,6 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
     * that is an array of species names found at that location.
     */
     function getGeojson(results){
-      var geojsonResults = {};
       _.each(results, function(gbifSpecies){
         if(gbifSpecies.hasOwnProperty('species')){//Don't do it if this gbif record is not a species (ie might be higher taxon level)
           var geohash = gbifSpecies.decimalLongitude + '' + gbifSpecies.decimalLatitude;
@@ -383,10 +384,7 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
       datasetsSorted = _.sortBy(datasets,'title');
       datasetContent = '<ul data-role="listview" data-inset="true">';
       _.each(datasetsSorted, function(dataset){
-        datasetContent += '<li><h2>' + dataset.title + '</h2>' +
-                          '<p>More info. at <a href="http://www.gbif.org/dataset/' + dataset.key + '" target="_new">Gbif</a> and ' +
-                          '<a href="' + dataset.website + '"target="_new">data supplier\'s website</a></p>' +
-                          '</li>'
+        datasetContent += '<li><a href="http://www.gbif.org/dataset/' + dataset.key + '" target="_new"><h2>' + dataset.title + '</h2></a></li>'
       });
       datasetContent += '</ul>'
       $('#dataset-info', data.toPage).html(datasetContent);
