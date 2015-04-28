@@ -397,15 +397,16 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
   function addTaxonomyContent(taxonKey, data, isScientificNames){
     var deferred = getTaxonomy(taxonKey);
     deferred.done(function(){
+      console.log(deferred.responseJSON);
       var scientificName = deferred.responseJSON.species;
-      var vernacularName = firstToUpper(deferred.responseJSON.vernacularName);
+      var vernacularName = deferred.responseJSON.vernacularName;
       var speciesNameTitle = '<i>' + scientificName + '</i>';
       var speciesNameIntro = speciesNameTitle;
       if(!_.isUndefined(vernacularName)){
-        speciesNameTitle += ' (' + vernacularName + ')';
+        speciesNameTitle += ' (' + firstToUpper(vernacularName) + ')';
       }
       if(!isScientificNames && !_.isUndefined(vernacularName)){
-        speciesNameIntro = vernacularName;
+        speciesNameIntro = firstToUpper(vernacularName);
       }
       $('#species-name-title', data.toPage).html(speciesNameTitle);
       $('#species-name-intro', data.toPage).html(speciesNameIntro);
