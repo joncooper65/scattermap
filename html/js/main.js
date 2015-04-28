@@ -397,7 +397,6 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
   function addTaxonomyContent(taxonKey, data, isScientificNames){
     var deferred = getTaxonomy(taxonKey);
     deferred.done(function(){
-      console.log(deferred.responseJSON);
       var scientificName = deferred.responseJSON.species;
       var vernacularName = deferred.responseJSON.vernacularName;
       var speciesNameTitle = '<i>' + scientificName + '</i>';
