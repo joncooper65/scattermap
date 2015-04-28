@@ -373,7 +373,7 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
     var datasets = [];
     $.when.apply($, deferreds).done(function(){
       _.each(deferreds, function(deferred){
-        var dataset = {"datasetKey": deferred.responseJSON.key,
+        var dataset = {"key": deferred.responseJSON.key,
                         "providerKey" : deferred.responseJSON.publishingOrganizationKey,
                         "title": deferred.responseJSON.title,
                         "description": deferred.responseJSON.description,
@@ -384,9 +384,8 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
       datasetContent = '<ul data-role="listview" data-inset="true">';
       _.each(datasetsSorted, function(dataset){
         datasetContent += '<li><h2>' + dataset.title + '</h2>' +
-                          'Add Organisation' +
-                          '<p>' + dataset.description + '</p>' +
-                          '<p><a href="' + dataset.website + '">' + dataset.website + '</a></p>' +
+                          '<p>More info. at <a href="http://www.gbif.org/dataset/' + dataset.key + '" target="_new">Gbif</a> and ' +
+                          '<a href="' + dataset.website + '"target="_new">data supplier\'s website</a></p>' +
                           '</li>'
       });
       datasetContent += '</ul>'
@@ -399,7 +398,7 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
     var deferred = getTaxonomy(taxonKey);
     deferred.done(function(){
       var scientificName = deferred.responseJSON.species;
-      var vernacularName = deferred.responseJSON.vernacularName;
+      var vernacularName = firstToUpper(deferred.responseJSON.vernacularName);
       var speciesNameTitle = '<i>' + scientificName + '</i>';
       var speciesNameIntro = speciesNameTitle;
       if(!_.isUndefined(vernacularName)){
