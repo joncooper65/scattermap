@@ -304,29 +304,60 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
       deferreds.push(getTaxonomy(species.taxonKey));
     });
     $.when.apply($, deferreds).done(function(){
-      var vernacularNames = [];
-      var scientificNames = [];
+      var vernacularSpecies = [];
+      var scientificSpecies = [];
+
+      //Add the vernacular name to the original species object
       _.each(deferreds, function(deferred){
-        if(typeof deferred.responseJSON.vernacularName === "undefined"){
-          scientificNames.push('<i>' + firstToUpper(deferred.responseJSON.species) + '</i>');
-        }else{
-          vernacularNames.push(firstToUpper(deferred.responseJSON.vernacularName));
-        }
+        _.each(speciess, function(species){
+          var isRequiredSpecies = (species.taxonKey == deferred.responseJSON.speciesKey);
+          if(isRequiredSpecies){
+            if(!_.isUndefined(deferred.responseJSON.vernacularName)){
+              species.vernacularName = deferred.responseJSON.vernacularName;
+            }
+          }
+        });
       });
-      vernacularNames.sort();
-      scientificNames.sort();
+
+      //Get a sorted list of species with vernacular names
+      vernacularSpecies = 
+      _.chain(speciess)
+        .filter(function(species){
+          return !_.isUndefined(species.vernacularName);
+        })
+        .sortBy('vernacularName')
+        .value();
+
+      //Get a sorted list of species without vernacular names
+      scientificSpecies = 
+      _.chain(speciess)
+        .filter(function(species){
+          return _.isUndefined(species.vernacularName);
+        })
+        .sortBy('name')
+        .value();
+
+      //Use the lists of vernacular and scientific species to build the content for the popup
       var content = '';
-      _.each(vernacularNames, function(name){
-        content = content + name + '<br />';
+      _.each(vernacularSpecies, function(species){
+        content += getPopupSpeciesNameLink(species, false) + '<br />';
       });
-      if(!_.isEmpty(scientificNames)){
-        content = content + '<h4 class="scientific-name-heading">Species without common names:</h4>';
-        _.each(scientificNames, function(name){
-          content = content + name + '<br />';
+      if(!_.isEmpty(scientificSpecies)){
+        content += '<h4 class="scientific-name-heading">Species without common names:</h4>';
+        _.each(scientificSpecies, function(species){
+          content += getPopupSpeciesNameLink(species, false) + '<br />';
         });
       }
       popup.setContent(content);
     });
+  }
+
+  function getPopupSpeciesNameLink(species, isScientificNames){
+    var name = species.name;
+    if(!isScientificNames && !_.isUndefined(species.vernacularName)){
+      name = species.vernacularName;
+    }
+    return '<a href="#species-info-page?datasetKeys=' + species.datasetKeys.join(',') + '&taxonKey=' + species.taxonKey + '&earliest=' + species.earliestYear + '&latest=' + species.latestYear + '">' + firstToUpper(name) + '</a>';
   }
 
   function firstToUpper(string){
@@ -357,8 +388,7 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
     var popupContent = '<div class="popup-content">';
      if(feature.properties && feature.properties.species){
         _.each(feature.properties.species, function(species){
-          var speciesLink = '<a href="#species-info-page?datasetKeys=' + species.datasetKeys.join(',') + '&taxonKey=' + species.taxonKey + '&earliest=' + species.earliestYear + '&latest=' + species.latestYear + '">' + species.name + '</a>';
-          popupContent = popupContent + speciesLink + '<br \>';
+          popupContent += getPopupSpeciesNameLink(species, true) + '<br \>';
         });
       }
     popupContent = popupContent + '</div>';
