@@ -14,7 +14,7 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
     var hasOpenPopups = false;
     var isScientificNames = true;//Show either vernacular (false) names in popup, or else scientific
     var startYear = 1900;//Don't get records before this year
-    var taxonGroup = ''//Limit to a taxonomic group
+    var taxonGroups = ''//Limit to a taxonomic group
     var totalNumRecords = 0;//Total number of records that are available from gbif for current region - used for paging
     var limit = 300;//Number of records per page
     var offset = limit;//Index of last record from gbif - used for paging
@@ -68,7 +68,7 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
 
       //Update taxonomic group change
       $('#taxon-group').change(function(){
-        taxonGroup = $('#taxon-group').val();
+        taxonGroups = $('#taxon-group').val();
         removeCurrentMarkers();
         addRecords(false);
       });
@@ -180,14 +180,35 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
     function getGbifQuery(isAddMoreRecords){
       var bounds = map.getBounds();
       return  'http://api.gbif.org/v1/occurrence/search?decimalLongitude=' 
-                   + bounds.getWest() + ',' + bounds.getEast() + '&'
+                   + bounds.getWest() + ',' + bounds.getEast()
                    + '&decimalLatitude=' + bounds.getSouth() + ',' + bounds.getNorth()
                    + '&hasCoordinate=true'
                    + ((startYear != 1900) ? '&year=' + startYear + ',' + new Date().getFullYear() : '')
-                   + ((_.isNumber(_.taxonGroup)) ? '' : '&taxonKey=' + taxonGroup)
+                   + getTaxonGroupKeys()
                    + '&limit=' + limit
                    + ((isAddMoreRecords) ? '&offset=' + offset : '')
                    + '&callback=processtoReturn';
+    }
+
+    /* Returns the taxonGroups value (which may have a single value, csv or be empty) 
+       as a query string fragment ready for use in a url
+       - where taxonGroups is 123, it returns '&taxonGroup=123'
+       - where taxonGroups is 1,2,3 it return '&taxonGroup=1&taxonGroup=2&taxonGroup=3'
+       - where taxonGroups is empty it returns and empty string
+    */
+    function getTaxonGroupKeys(){
+      var paramFragment = '&taxonKey=';
+      if(_.isNumber(taxonGroups)){
+        return paramFragment + taxonGroups;
+      } else if(!_.isUndefined(taxonGroups) && !_.isEmpty(taxonGroups)){
+        var toReturn = ''
+        _.each(taxonGroups.split(','), function(taxonGroup){
+          toReturn += paramFragment + taxonGroup;
+        });
+        return toReturn;
+      } else {
+        return '';
+      }
     }
 
     /*
