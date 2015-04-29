@@ -14,6 +14,7 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
     var hasOpenPopups = false;
     var isScientificNames = true;//Show either vernacular (false) names in popup, or else scientific
     var startYear = 1900;//Don't get records before this year
+    var taxonGroup = ''//Limit to a taxonomic group
     var totalNumRecords = 0;//Total number of records that are available from gbif for current region - used for paging
     var limit = 300;//Number of records per page
     var offset = limit;//Index of last record from gbif - used for paging
@@ -65,6 +66,12 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
         addRecords(false);
       });
 
+      //Update taxonomic group change
+      $('#taxon-group').change(function(){
+        taxonGroup = $('#taxon-group').val();
+        removeCurrentMarkers();
+        addRecords(false);
+      });
 
       //Handle the 'add more records' click event
       $('#add-more-records').click(function(){
@@ -177,6 +184,7 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
                    + '&decimalLatitude=' + bounds.getSouth() + ',' + bounds.getNorth()
                    + '&hasCoordinate=true'
                    + ((startYear != 1900) ? '&year=' + startYear + ',' + new Date().getFullYear() : '')
+                   + ((_.isNumber(_.taxonGroup)) ? '' : '&taxonKey=' + taxonGroup)
                    + '&limit=' + limit
                    + ((isAddMoreRecords) ? '&offset=' + offset : '')
                    + '&callback=processtoReturn';
