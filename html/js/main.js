@@ -96,6 +96,14 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
       $('#geolocate-button').click(function(){
         map.locate({setView: true, zoom: 5});
       });
+
+    }
+
+    function forceLandscapePopupStyle(){
+      var background = '#252525';
+      $('.leaflet-popup-content-wrapper').css('background-color', background);
+      $('.leaflet-popup-tip').css('background', background);
+      $('.leaflet-popup-content').css({'border-color': background});
     }
 
     function onLocationFound(e){
@@ -240,13 +248,14 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
 
     function handlePopupOpen(event){
       hasOpenPopups = true;
-      event.popup.setContent('Getting species...');
+      event.popup.setContent('<span class="popup-heading">Getting species...</span>');
       if(isScientificNames){
         event.popup.setContent(getPopupContentScientific(event.target.feature));
       }else{
-        (setPopupContentVernacular(event.popup, event.target.feature.properties.species));
+        setPopupContentVernacular(event.popup, event.target.feature.properties.species);
       }
       $('#index').enhanceWithin();
+      forceLandscapePopupStyle();
     }
 
     function handlePopupClose(event){
@@ -371,17 +380,21 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
         .value();
 
       //Use the lists of vernacular and scientific species to build the content for the popup
-      var content = '';
+      var content = '<div class="popup-content"><ul data-role="listview">';
       _.each(vernacularSpecies, function(species){
-        content += getPopupSpeciesNameLink(species, false) + '<br />';
+        content += getPopupSpeciesNameLink(species, false);
       });
       if(!_.isEmpty(scientificSpecies)){
-        content += '<h4 class="scientific-name-heading">Species without common names:</h4>';
+        if(!_.isEmpty(vernacularSpecies)){
+          content += '<li class="popup-heading"><h4>No common name:</h4></li>';
+        }
         _.each(scientificSpecies, function(species){
-          content += getPopupSpeciesNameLink(species, false) + '<br />';
+          content += getPopupSpeciesNameLink(species, false);
         });
       }
+      content += '</ul></div>'
       popup.setContent(content);
+      $('#index').enhanceWithin();
     });
   }
 
@@ -421,8 +434,7 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
     var popupContent = '<div class="popup-content"><ul data-role="listview">';
      if(feature.properties && feature.properties.species){
         _.each(feature.properties.species, function(species){
-//          popupContent += getPopupSpeciesNameLink(species, true) + '<br \>';
-          popupContent += getPopupSpeciesNameLink(species, true) + '<br \>';
+          popupContent += getPopupSpeciesNameLink(species, true);
         });
       }
     popupContent = popupContent + '</ul></div>';
