@@ -20,7 +20,7 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
     var offset = limit;//Index of last record from gbif - used for paging
     var waitingForRecords = false;//Don't fire any other requests if this is true - helps with map panning
     var boundingBoxOfRecords;//Used to track the bbox of the current set of species records, primarily to refresh the records if the map bounding box is different
-    var geojsonResults = {};//Data model for current view
+    geojsonResults = {};//Data model for current view
 
     initialise();
 
@@ -246,6 +246,7 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
       }else{
         (setPopupContentVernacular(event.popup, event.target.feature.properties.species));
       }
+      $('#index').enhanceWithin();
     }
 
     function handlePopupClose(event){
@@ -270,15 +271,18 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
     * for the placemarker - species list, species keys, earliest and latest year a properties.
     */
     function updateGeojsonModel(results){
+      //This enforces a lat/lon precision - eg if locationPrecisionLimit=4 then lat/lon gbif values closer than about 11m will be represented by the same point
+      var locationPrecisionLimit = 4;
       _.each(results, function(gbifSpecies){
         if(gbifSpecies.hasOwnProperty('species')){//Don't do it if this gbif record is not a species (ie might be higher taxon level)
-          var geohash = gbifSpecies.decimalLongitude + '' + gbifSpecies.decimalLatitude;
+          //Reduce precision to 4 decimal places, which will cluster locations closer than about 11m
+          var geohash = gbifSpecies.decimalLongitude.toFixed(locationPrecisionLimit) + gbifSpecies.decimalLongitude.toFixed(locationPrecisionLimit);
           if(geojsonResults.hasOwnProperty(geohash)){
             updateSpecies(gbifSpecies, geojsonResults[geohash].properties.species);
           }else{
             geojsonResults[geohash] = {
               "type": "Feature",
-              "geometry": {"type": "Point", "coordinates": [gbifSpecies.decimalLongitude, gbifSpecies.decimalLatitude]},
+              "geometry": {"type": "Point", "coordinates": [gbifSpecies.decimalLongitude.toFixed(locationPrecisionLimit), gbifSpecies.decimalLatitude.toFixed(locationPrecisionLimit)]},
               "properties": {"species": []}
             };
             geojsonResults[geohash].properties.species.push(getSpeciesFromGbif(gbifSpecies));
@@ -292,10 +296,10 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
   });
 
 
-    /*This returns an array of geojson objects from the geojasonResults model in a form ready for leaflet.
-    * The geojson objects of the array are unique on lat/long and contain the properties required
-    * for the placemarker - species list, species keys, earlies and latest year a properties.
-    */
+  /*This returns an array of geojson objects from the geojasonResults model in a form ready for leaflet.
+  * The geojson objects of the array are unique on lat/long and contain the properties required
+  * for the placemarker - species list, species keys, earlies and latest year a properties.
+  */
   function getGeojson(geojsonResults){
     var toReturn = [];
     _.map(geojsonResults, function(elem){
@@ -386,7 +390,7 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
     if(!isScientificNames && !_.isUndefined(species.vernacularName)){
       name = species.vernacularName;
     }
-    return '<a href="#species-info-page?datasetKeys=' + species.datasetKeys.join(',') + '&taxonKey=' + species.taxonKey + '&earliest=' + species.earliestYear + '&latest=' + species.latestYear + '">' + firstToUpper(name) + '</a>';
+    return '<li><a class="popup-link" href="#species-info-page?datasetKeys=' + species.datasetKeys.join(',') + '&taxonKey=' + species.taxonKey + '&earliest=' + species.earliestYear + '&latest=' + species.latestYear + '">' + firstToUpper(name) + '</a></li>';
   }
 
   function firstToUpper(string){
@@ -414,13 +418,14 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
   }
 
   function getPopupContentScientific(feature){
-    var popupContent = '<div class="popup-content">';
+    var popupContent = '<div class="popup-content"><ul data-role="listview">';
      if(feature.properties && feature.properties.species){
         _.each(feature.properties.species, function(species){
+//          popupContent += getPopupSpeciesNameLink(species, true) + '<br \>';
           popupContent += getPopupSpeciesNameLink(species, true) + '<br \>';
         });
       }
-    popupContent = popupContent + '</div>';
+    popupContent = popupContent + '</ul></div>';
     return popupContent;
   }
 
