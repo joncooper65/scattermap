@@ -335,7 +335,7 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
   }
 
   function getSpeciesFromGbif(gbifSpecies){
-    var species = {"taxonKey": gbifSpecies.taxonKey, "name": gbifSpecies.species, "earliestYear": gbifSpecies.year, "latestYear": gbifSpecies.year, "datasetKeys": []};
+    var species = {"taxonKey": gbifSpecies.taxonKey, "name": firstToUpper(gbifSpecies.species), "earliestYear": gbifSpecies.year, "latestYear": gbifSpecies.year, "datasetKeys": []};
     species.datasetKeys.push(gbifSpecies.datasetKey);
     return species;
   }
@@ -355,7 +355,7 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
           var isRequiredSpecies = (species.taxonKey == deferred.responseJSON.speciesKey);
           if(isRequiredSpecies){
             if(!_.isUndefined(deferred.responseJSON.vernacularName)){
-              species.vernacularName = deferred.responseJSON.vernacularName;
+              species.vernacularName = firstToUpper(deferred.responseJSON.vernacularName);
             }
           }
         });
@@ -403,7 +403,7 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
     if(!isScientificNames && !_.isUndefined(species.vernacularName)){
       name = species.vernacularName;
     }
-    return '<li><a class="popup-link" href="#species-info-page?datasetKeys=' + species.datasetKeys.join(',') + '&taxonKey=' + species.taxonKey + '&earliest=' + species.earliestYear + '&latest=' + species.latestYear + '">' + firstToUpper(name) + '</a></li>';
+    return '<li><a class="popup-link" href="#species-info-page?datasetKeys=' + species.datasetKeys.join(',') + '&taxonKey=' + species.taxonKey + '&earliest=' + species.earliestYear + '&latest=' + species.latestYear + '">' + name + '</a></li>';
   }
 
   function firstToUpper(string){
@@ -493,10 +493,10 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
       var speciesNameTitle = '<i>' + scientificName + '</i>';
       var speciesNameIntro = speciesNameTitle;
       if(!_.isUndefined(vernacularName)){
-        speciesNameTitle += ' (' + firstToUpper(vernacularName) + ')';
+        speciesNameTitle += ' (' + vernacularName + ')';
       }
       if(!isScientificNames && !_.isUndefined(vernacularName)){
-        speciesNameIntro = firstToUpper(vernacularName);
+        speciesNameIntro = vernacularName;
       }
       $('#species-name-title', data.toPage).html(speciesNameTitle);
       $('#species-name-intro', data.toPage).html(speciesNameIntro);
