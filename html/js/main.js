@@ -406,8 +406,12 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
     return '<li><a class="popup-link" href="#species-info-page?datasetKeys=' + species.datasetKeys.join(',') + '&taxonKey=' + species.taxonKey + '&earliest=' + species.earliestYear + '&latest=' + species.latestYear + '">' + name + '</a></li>';
   }
 
+  
+  /**This ensures that only the first word starts with upper case - all other should start with lower.
+  * It does not check that non-first letters are lowercase.
+  */
   function firstToUpper(string){
-    return string.charAt(0).toUpperCase() + string.slice(1);
+    return string.charAt(0).toUpperCase() + string.toLowerCase().slice(1);
   }
 
   function getTaxonomy(taxonKey){
