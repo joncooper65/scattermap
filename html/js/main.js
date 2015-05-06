@@ -99,11 +99,12 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
 
     }
 
-    function forceLandscapePopupStyle(){
+    function forcePopupStyle(){
       var background = '#252525';
       $('.leaflet-popup-content-wrapper').css('background-color', background);
       $('.leaflet-popup-tip').css('background', background);
       $('.leaflet-popup-content').css({'border-color': background});
+      $('.ui-content .ui-listview, .ui-panel-inner>.ui-listview').css('margin', '0em 0em -1em -1em');
     }
 
     function onLocationFound(e){
@@ -251,11 +252,11 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
       event.popup.setContent('<span class="popup-heading">Getting species...</span>');
       if(isScientificNames){
         event.popup.setContent(getPopupContentScientific(event.target.feature));
+        $('#index').enhanceWithin();
       }else{
-        setPopupContentVernacular(event.popup, event.target.feature.properties.species);
+        setPopupContentVernacular(event.popup, event.target.feature.properties.species, forcePopupStyle);
       }
-      $('#index').enhanceWithin();
-      forceLandscapePopupStyle();
+      forcePopupStyle();
     }
 
     function handlePopupClose(event){
@@ -264,8 +265,9 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
 
     function onEachFeature(feature, layer){
       var popup = L.popup({
-          maxWidth:200,
-          maxHeight: 300,
+          maxWidth:250,
+          minWidth:200,
+          maxHeight: 200,
           autoPan: true,
           keepInView: true
         }, layer);
@@ -340,7 +342,7 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
     return species;
   }
 
-  function setPopupContentVernacular(popup, speciess){
+  function setPopupContentVernacular(popup, speciess, forcePopupStyle){
     var deferreds = [];
     _.each(speciess, function(species){
       deferreds.push(getTaxonomy(species.taxonKey));
@@ -395,6 +397,7 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
       content += '</ul></div>'
       popup.setContent(content);
       $('#index').enhanceWithin();
+      forcePopupStyle();
     });
   }
 

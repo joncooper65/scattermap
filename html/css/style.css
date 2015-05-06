@@ -91,16 +91,3 @@ div.settings-input {
 .compensate-for-jqm-listview-negative-margin {
   margin-bottom: 15px;
 }
-
-.leaflet-popup-content-wrapper {
-  background-color: #252525;
-}
-
-.leaflet-popup-content {
-  border-color: #252525;
-  width: 100%;
-}
-
-.leaflet-popup-tip {
-  background: #252525;
-}
