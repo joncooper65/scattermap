@@ -1,0 +1,93 @@
+html, body, .map-page, #map, #index {
+	height: 100%;
+}
+
+.ui-content {
+	position: absolute;
+	top: 40px;
+	right: 0;
+	bottom: 40px;
+	left: 0;
+	padding: 0 !important;
+}
+
+.popup-heading {
+  color: rgba(134,255,154,1)!important;
+  font-size: 14px;
+  text-shadow: 0px 0px 0px #000;
+}
+
+div.settings-input {
+  float: right;
+}
+
+/* Custom indentations are needed because the length of custom labels differs from
+   the length of the standard labels */
+.names-flipswitch.ui-flipswitch .ui-btn.ui-flipswitch-on {
+    text-indent: -5em;
+}
+.names-flipswitch.ui-flipswitch .ui-flipswitch-off {
+    text-indent: 0em;
+}
+/* Custom widths are needed because the length of custom labels differs from
+   the length of the standard labels */
+.names-flipswitch.ui-flipswitch {
+    width: 7em;
+}
+.names-flipswitch.ui-flipswitch.ui-flipswitch-active {
+    padding-left: 5em;
+    width: 1.875em;
+}
+
+@media screen and (min-width: 28em) {
+    /*Repeated from rule .ui-flipswitch*/
+    .ui-field-contain > label + .names-flipswitch.ui-flipswitch {
+        width: 1.875em;
+    }
+}
+
+.dates-flipswitch.ui-flipswitch .ui-btn.ui-flipswitch-on {
+    text-indent: -6em;
+}
+.dates-flipswitch.ui-flipswitch .ui-flipswitch-off {
+    text-indent: 0em;
+}
+/* Custom widths are needed because the length of custom labels differs from
+   the length of the standard labels */
+.dates-flipswitch.ui-flipswitch {
+    width: 8em;
+}
+.dates-flipswitch.ui-flipswitch.ui-flipswitch-active {
+    padding-left: 6em;
+    width: 1.875em;
+}
+
+@media screen and (min-width: 28em) {
+    /*Repeated from rule .ui-flipswitch*/
+    .ui-field-contain > label + .dates-flipswitch.ui-flipswitch {
+        width: 1.875em;
+    }
+}
+
+@media screen and (max-width: 28em) {
+div.settings-input {
+  float: left;
+}
+
+.map-popup{
+  color: #333;
+  text-shadow: 0px 1px 0px #f3f3f3;
+}
+
+.popup-link{
+  /*color: #0f0 !important;*/
+}
+
+/*This forces text, which is inside a jqm listview, to wrap rather than 'ellipses'*/
+#dataset-info li,h2,.dataset-description,p {
+  white-space: normal !important;
+}
+
+.compensate-for-jqm-listview-negative-margin {
+  margin-bottom: 15px;
+}
