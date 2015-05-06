@@ -74,12 +74,14 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
       });
 
       //Handle the 'add more records' click event
-      $('#add-more-records').click(function(){
+      $('#add-more-records').click(function(e){
         if(offset >= totalNumRecords){
           $('#no-more-records-popup').popup('open');
         } else {
-          offset = offset + limit;
-          addRecords(true);
+          if(!waitingForRecords){
+            addRecords(true);
+            offset = offset + limit;
+          }
         }
       });
 
