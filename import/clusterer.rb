@@ -8,7 +8,7 @@ class Clusterer
     marker = @markers.find_one
     until marker.nil?
       query = {"loc" => {"$near" => {"$geometry" => marker['loc'], "$maxDistance" => @distance }}}
-      species = markers.find(query).group_by { |d| d['key'] }.map { |t,docs| {
+      species = @markers.find(query).group_by { |d| d['key'] }.map { |t,docs| {
         'key' => t,
         'years' => docs.map{ |d| d['year'] }.uniq,
         'datasets' => docs.map{ |d| d['dataset'] }.uniq
