@@ -1,4 +1,5 @@
 require './gbif'
+require 'benchmark'
 
 class DatasetDownloader
   def initialize(publisher)
@@ -23,7 +24,11 @@ class DatasetDownloader
       records = gbif.collection('occurrence/search', {:datasetKey => d['key']})
       if records.size < 200_000
         # The current dataset can be loaded in, add to mongo in groups of 1000
-        records.lazy.map(&gbif_to_mongo).each_slice(1000) {|r| collection.insert(r) }
+        puts "Loading dataset #{d['key']} - #{records.size} records"
+        time = Benchmark.realtime do
+          records.lazy.map(&gbif_to_mongo).each_slice(1000) {|r| collection.insert(r) }
+        end
+        puts "\t - completed in in #{time}s"
       else
         puts "Too many records in #{d['key']}"
       end

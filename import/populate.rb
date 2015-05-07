@@ -8,7 +8,7 @@ db = conn['mydb']
 
 
 records = db['records']    # Create/Get collection to fill
-collection.remove()        # Clear out any records in the database
-collection.drop_indexes()  # Drop any indexes in this collection
+records.remove()           # Clear out any records in the database
+#records.drop_indexes()     # Drop any indexes in this collection
 nbn_datasets.populate(records)
-collection.create_index :loc => '2dsphere' # Create a spatial index for the layer
+records.create_index :loc => '2dsphere' # Create a spatial index for the layer
