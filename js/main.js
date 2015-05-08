@@ -223,26 +223,24 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
     }
 
     /*
-    * Remove the current species markers only if there are no popups open.
+    * Remove the current species markers.
     * Note: it seems that the simplest way to detect if a layer on the map 
     * is a species layer is to try to throw an exception by accessing the
     * nested 'species' property.
     */
     function removeCurrentMarkers(){
       offset = limit;
-       if(!hasOpenPopups){
-          geojsonResults = {};
-          map.eachLayer(function(layer){
-          try{
-            if(!_.isUndefined(layer.feature.properties.species)){
-              map.removeLayer(layer);
-            }
-          }catch(e){
-            //Do nothing, since this was only thrown because the layer does not
-            //have the nested 'species' property we were looking for
-          }
-         });
-       }
+      geojsonResults = {};
+      map.eachLayer(function(layer){
+      try{
+        if(!_.isUndefined(layer.feature.properties.species)){
+          map.removeLayer(layer);
+        }
+      }catch(e){
+        //Do nothing, since this was only thrown because the layer does not
+        //have the nested 'species' property we were looking for
+      }
+     });
     }
 
     function onLocationError(e){
