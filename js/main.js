@@ -13,13 +13,14 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
     var map;
     var hasOpenPopups = false;
     var isScientificNames = true;//Show either vernacular (false) names in popup, or else scientific
-    var startYear = 1900;//Don't get records before this year
+    var startYear = String(1900);//Don't get records before this year
     var taxonGroups = ''//Limit to a taxonomic group
     var totalNumRecords = 0;//Total number of records that are available from gbif for current region - used for paging
     var limit = 300;//Number of records per page
     var offset = limit;//Index of last record from gbif - used for paging
     var waitingForRecords = false;//Don't fire any other requests if this is true - helps with map panning
     var boundingBoxOfRecords;//Used to track the bbox of the current set of species records, primarily to refresh the records if the map bounding box is different
+    var yearOfRecords;//Used to track the year filter of the current set of species records, primarily to refresh the records if the slider's year value is diffferent
     geojsonResults = {};//Data model for current view
 
     initialise();
@@ -60,11 +61,9 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
       });
 
       //Update the map with the new year after the year slider has been used
-      $('#slider-year').parent().mouseup(function(){
-        startYear = $('#slider-year').val();
-        removeCurrentMarkers();
-        addRecords(false);
-      });
+      $('#slider-year').parent().touchend(handleYearChange);
+      $('#slider-year').parent().keyup(handleYearChange);
+
 
       //Update taxonomic group change
       $('#taxon-group').change(function(){
@@ -84,6 +83,14 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
           }
         }
       });
+
+      function handleYearChange(){
+        startYear = $('#slider-year').val();
+        if(startYear.length === 4 && !waitingForRecords){
+          removeCurrentMarkers();
+          addRecords(false);
+        }
+      }
 
       //updateSpeciesInfoPageContent
       $(document).on('pagecontainerbeforetransition', function(e, data){
@@ -125,6 +132,7 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
 
     function addRecords(isAddMoreRecords){
       boundingBoxOfRecords = getBoundsString(map);
+      yearOfRecords = startYear;
       if(!hasOpenPopups){
         doLoading();
         waitingForRecords = true;
@@ -136,7 +144,6 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
               contentType: "application/json",
               dataType: 'jsonp',
               success: function(json) {
-                waitingForRecords = false;
                 totalNumRecords = json.count;
                 if(!isAddMoreRecords){
                   removeCurrentMarkers();
@@ -160,7 +167,12 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
                 console.log(e.getResponseHeader());
               },
               complete: function(e){
+                waitingForRecords = false;
+                //Refresh records if state of controls has changed since ajax query sent
                 if(boundingBoxOfRecords !== getBoundsString(map)){
+                  addRecords(false);
+                }
+                if(yearOfRecords !== $('#slider-year').val()){
                   addRecords(false);
                 }
               }
