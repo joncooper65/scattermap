@@ -89,11 +89,6 @@ div.settings-input {
 
 
 /*These needed for forcing footer to be in correct place*/
-body,
-.ui-page {
-    min-height:100% !important;
-    height:auto !important;
-}
 .ui-footer {
     position:absolute !important;
     width:100%;
@@ -109,12 +104,12 @@ body,
 }
 
 .footer-menu {
-  font-size: 10px !important;
-  font-weight: normal !important;
+/*  font-size: 10px !important;
+*/  font-weight: normal !important;
 }
 
 .ui-footer .ui-title {
-  margin: 0.6em 1em;
+  margin: -1.2em 1em;
 }
 
 .footer-menu.add-more{
