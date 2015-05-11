@@ -97,13 +97,26 @@ body,
 .ui-footer {
     position:absolute !important;
     width:100%;
-    bottom:10px;
+    bottom:0px;
 }
 .leaflet-bottom {
-  bottom: 12px;
+  bottom: 21px;
 }
 
 .ui-btn-right {
   top: 0em;
   right: 0.4em;
+}
+
+.footer-menu {
+  font-size: 10px !important;
+  font-weight: normal !important;
+}
+
+.ui-footer .ui-title {
+  margin: 0.6em 1em;
+}
+
+.footer-menu.add-more{
+  float: right;
 }
