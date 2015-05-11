@@ -12,7 +12,7 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
 
     var map;
     var hasOpenPopups = false;
-    var isScientificNames = true;//Show either vernacular (false) names in popup, or else scientific
+    var isScientificNames = true;//Show either vernacular (false) names in popup, or else scientific - only used for those without localStorage
     var startYear = String(1900);//Don't get records before this year
     var taxonGroups = ''//Limit to a taxonomic group
     var totalNumRecords = 0;//Total number of records that are available from gbif for current region - used for paging
@@ -57,7 +57,7 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
     function initialiseEvents(){
       //namePreferenceChange
       $('#flip-name').change(function(){
-        isScientificNames = $(this).is(':checked');
+        setIsScientificNames($(this).is(':checked'));
       });
 
       //Update the map with the new year after the year slider has been used
@@ -97,7 +97,7 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
         if ($.type(data.toPage) !== 'undefined' && $.type(data.absUrl) !== 'undefined' && data.toPage[0].id == 'species-info-page') {
           var params = getParams(data.absUrl);
           addDatasetContent(params.datasetKeys, data);
-          addTaxonomyContent(params, data, isScientificNames);
+          addTaxonomyContent(params, data, getIsScientificNames());
         }
       });
 
@@ -262,7 +262,7 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
     function handlePopupOpen(event){
       hasOpenPopups = true;
       event.popup.setContent('<span class="popup-heading">Getting species...</span>');
-      if(isScientificNames){
+      if(getIsScientificNames()){
         event.popup.setContent(getPopupContentScientific(event.target.feature));
         $('#index').enhanceWithin();
       }else{
@@ -561,6 +561,36 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
     })
     .object()
     .value();
+  }
+
+  function getIsScientificNames(){
+    if(hasLocalStorage()){
+      if(_.isEmpty(localStorage.isScientificNames)){
+        localStorage.isScientificNames = true;
+      }
+      return (localStorage.isScientificNames === 'true');
+    } else {
+      return isScientificNames;
+    }
+  }
+
+  function setIsScientificNames(preference){
+    if(hasLocalStorage()){
+      localStorage.isScientificNames = preference;
+    } else {
+      isScientificNames = preference;
+    }
+  }
+
+  function hasLocalStorage(){
+      var test = 'test';
+      try {
+          localStorage.setItem(test, test);
+          localStorage.removeItem(test);
+          return true;
+      } catch(e) {
+          return false;
+      }
   }
 
 });
