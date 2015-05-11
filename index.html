@@ -2,26 +2,94 @@
 <html>
 	<head>
 		<meta name="viewport" content="width=device-width,  initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no"/>
-<!--	 	<link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css" />-->
-		<link rel="stylesheet" href="/vendor/leaflet/dist/leaflet.css" />
-<!--		<link rel="stylesheet" href="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.css" />-->
-		<link rel="stylesheet" href="/vendor/jquery-mobile-bower/css/jquery.mobile-1.4.2.min.css" />
-		<link rel="stylesheet" href="/css/style.css" />
+		<link rel="stylesheet" href="vendor/leaflet/dist/leaflet.css" />
+	  <link rel="stylesheet" href="vendor/jquery-mobile-bower/css/jquery.mobile-1.4.2.min.css" />
+	  <link rel="stylesheet" href="css/style.css" />
 
-<!--		<script src="/vendor/jquery/dist/jquery.min.js"></script>
-		<script type="text/javascript" src="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.js"></script>
-		<script src="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.js"></script>
-		<script type="text/javascript" src="/js/main.js"></script>-->
-
-		<script data-main="/js/main" src="/vendor/requirejs/require.js"></script>
+		<script data-main="js/main" src="vendor/requirejs/require.js"></script>
 	</head>
 	<body>
-		<div data-role="page" id="index">
-			<div data-theme="b" data-role="header">
-				<h1>Observer</h1>
+		<div data-role="page" id="index" data-theme="b">
+			<div data-role="header">
+				<h1>Wildlife Map</h1><br/><br/>
 			</div>
 			<div data-role="content" id="map-page">
 				<div id="map"></div>
+			</div>
+			<div data-role="footer"> 
+				<div data-role="popup" id="no-more-records-popup">
+					<p>There are no more records to add</p>
+				</div>
+				<h4></h4> 
+				<div data-role="navbar" data-grid="c">
+					<ul>
+						<li><a href="#settings" data-role="button" data-inline="true" data-icon="gear" data-iconpos="top" class="footer-menu">Settings</a></li>
+						<li><a href="#" id='geolocate-button' data-role="button" data-inline="true" data-icon="navigation" data-iconpos="top" class="footer-menu">Locate</a></li>
+						<li><a href="#" id='geolocate-button' data-role="button" data-inline="true" data-icon="info" data-iconpos="top" class="footer-menu">Info</a></li>
+						<li><a href="#" id='add-more-records' data-role="button" data-inline="true" data-icon="plus" data-iconpos="top" class="footer-menu">Locate</a></li>
+					</ul>
+				</div>
+			</div> 
+		</div>
+
+		<div data-role="page" id="settings" data-theme="b">
+			<div data-role="header">
+    		<a href='#index' data-icon="carat-l" class="ui-btn-left">Map</a>
+				<h1>Wildlife Map</h1>
+			</div>
+			<div data-role="content">
+				<form>
+					<ul data-role="listview" data-inset="true">
+		        <li class="ui-field-contain">
+					    <label for="flip-names">Species name preference:</label>
+					    <div class="settings-input">
+					    	<input type="checkbox" data-role="flipswitch" name="flip-name" id="flip-name" checked="" data-on-text="Scientific" data-off-text="Common" data-wrapper-class="names-flipswitch">
+					  </div>
+		        </li>
+		        <li class="ui-field-contain">
+							<label for="slider-year">Start year:</label>
+							<input type="range" name="slider-year" id="slider-year" value="1900" min="1900" max="2015">
+		        </li>
+		        <li class="ui-field-contain">
+							<label for="taxon-group">Limit to a species group:</label>
+							<select name="taxon-group" id="taxon-group">
+								<option value="">All species</option>
+								<option value="131">Amphibians</option>
+								<option value="797">Butterflies and moths</option>
+								<option value="327,13,9">Bryophytes</option>
+								<option value="212">Birds</option>
+								<option value="1470">Beetles</option>
+								<option value="194">Conifers</option>
+								<option value="789">Dragonflies and damselflies</option>
+								<option value="120,121,204,239,357">Fishes</option>
+								<option value="220">Flowering plants</option>
+								<option value="5">Fungi</option>
+								<option value="1458">Grasshoppers and crickets</option>
+								<option value="216">Insects</option>
+								<option value="359">Mammals</option>
+								<option value="52">Molluscs</option>
+								<option value="715">Reptiles</option>
+								<option value="1003,1225,787">River flies</option>
+								<option value="1496">Spiders</option>
+							</select>
+		        </li>
+					</ul>
+				</form>
+			</div>
+		</div>
+
+		<div data-role="page" id="species-info-page" data-theme="b">
+			<div data-role="header">
+    		<a href='#index' data-icon="carat-l" class="ui-btn-left">Map</a>
+				<h1>Wildlife Map</h1>
+			</div>
+			<div data-role="content" class="species-info-content">
+				<h3 id="species-name-title"></h3>
+				<span id="species-info-date"></span><br/><br/>
+				<div class="compensate-for-jqm-listview-negative-margin">
+					<span id="species-name-intro"></span> has observations at this location from the following datasets:
+				</div>
+				<div id="dataset-info"></div>
 			</div>
 		</div>
 	</body>
