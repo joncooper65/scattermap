@@ -64,6 +64,13 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
       $('#slider-year').parent().touchend(handleYearChange);
       $('#slider-year').parent().keyup(handleYearChange);
 
+      function handleYearChange(){
+        startYear = $('#slider-year').val();
+        if(startYear.length === 4 && !waitingForRecords){
+          removeCurrentMarkers();
+          addRecords(false);
+        }
+      }
 
       //Update taxonomic group change
       $('#taxon-group').change(function(){
@@ -83,14 +90,6 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
           }
         }
       });
-
-      function handleYearChange(){
-        startYear = $('#slider-year').val();
-        if(startYear.length === 4 && !waitingForRecords){
-          removeCurrentMarkers();
-          addRecords(false);
-        }
-      }
 
       //updateSpeciesInfoPageContent
       $(document).on('pagecontainerbeforetransition', function(e, data){

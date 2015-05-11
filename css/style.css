@@ -69,7 +69,6 @@ div.settings-input {
     }
 }
 
-@media screen and (max-width: 28em) {
 div.settings-input {
   float: left;
 }
@@ -79,10 +78,6 @@ div.settings-input {
   text-shadow: 0px 1px 0px #f3f3f3;
 }
 
-.popup-link{
-  /*color: #0f0 !important;*/
-}
-
 /*This forces text, which is inside a jqm listview, to wrap rather than 'ellipses'*/
 #dataset-info li,h2,.dataset-description,p {
   white-space: normal !important;
@@ -90,4 +85,25 @@ div.settings-input {
 
 .compensate-for-jqm-listview-negative-margin {
   margin-bottom: 15px;
+}
+
+
+/*These needed for forcing footer to be in correct place*/
+body,
+.ui-page {
+    min-height:100% !important;
+    height:auto !important;
+}
+.ui-footer {
+    position:absolute !important;
+    width:100%;
+    bottom:10px;
+}
+.leaflet-bottom {
+  bottom: 12px;
+}
+
+.ui-btn-right {
+  top: 0em;
+  right: 0.4em;
 }
