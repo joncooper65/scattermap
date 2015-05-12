@@ -105,6 +105,9 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
         map.locate({setView: true, zoom: 5});
       });
 
+      //Populate summary page
+      $('#summary-button').click(generateSummary);
+
     }
 
     function forcePopupStyle(){
@@ -595,6 +598,14 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
   function removeNavBarActive(){
     $('.ui-navbar a').removeClass('ui-btn-active');
     $('#index').enhanceWithin();
+  }
+
+  function generateSummary(){
+    var species;
+    var datasets;
+    _.each(geojsonResults, function(location){
+      console.dir(location.properties.species);
+    });
   }
 
 });
