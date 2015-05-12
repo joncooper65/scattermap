@@ -167,6 +167,7 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
               },
               complete: function(e){
                 waitingForRecords = false;
+                removeNavBarActive();
                 //Refresh records if state of controls has changed since ajax query sent
                 if(boundingBoxOfRecords !== getBoundsString(map)){
                   addRecords(false);
@@ -189,9 +190,7 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
 
     function doLoading(){
       $.mobile.loading( "show", {
-        theme: "b",
-        textonly: false,
-        html: ""
+        defaults: true
       });
     }
 
@@ -590,6 +589,12 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
       } catch(e) {
           return false;
       }
+  }
+
+  // Because the nav bar is used for more than navigation, remove the active state from buttons when an action has finished
+  function removeNavBarActive(){
+    $('.ui-navbar a').removeClass('ui-btn-active');
+    $('#index').enhanceWithin();
   }
 
 });
