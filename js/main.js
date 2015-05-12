@@ -604,7 +604,29 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
     var species;
     var datasets;
     _.each(geojsonResults, function(location){
-      console.dir(location.properties.species);
+//      console.dir(location.properties.species);
+
+//  function updateSpecies(gbifSpecies, speciesArray){
+    var species = _.findWhere(species, {taxonKey: location.properties.species.taxonKey})
+    if(_.isUndefined(species)){
+      speciesArray.push(location.properties.species.taxonKey);
+    }
+    // else{
+    //   if(!_.contains(species.datasetKeys, gbifSpecies.datasetKey)){
+    //     species.datasetKeys.push(gbifSpecies.datasetKey);
+    //   }
+    //   if(species.latestYear < gbifSpecies.year){
+    //     species.latestYear = gbifSpecies.year;
+    //   }
+    //   if(species.earliestYear > gbifSpecies.year){
+    //     species.earliestYear = gbifSpecies.year;
+    //   }
+    }
+//  }
+
+    console.dir(species);
+
+
     });
   }
 
