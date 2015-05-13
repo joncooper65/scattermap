@@ -346,11 +346,12 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
       if(species.earliestYear > gbifSpecies.year){
         species.earliestYear = gbifSpecies.year;
       }
+      species.numRecs += 1;
     }
   }
 
   function getSpeciesFromGbif(gbifSpecies){
-    var species = {"taxonKey": gbifSpecies.taxonKey, "name": firstToUpper(gbifSpecies.species), "earliestYear": gbifSpecies.year, "latestYear": gbifSpecies.year, "datasetKeys": []};
+    var species = {"taxonKey": gbifSpecies.taxonKey, "name": firstToUpper(gbifSpecies.species), "earliestYear": gbifSpecies.year, "latestYear": gbifSpecies.year, "datasetKeys": [], "numRecs": 1};
     species.datasetKeys.push(gbifSpecies.datasetKey);
     return species;
   }
@@ -601,16 +602,32 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
   }
 
   function generateSummary(){
-    var species;
-    var datasets;
+    var speciess = new Object();
+    var groups = new Object();
+    var datasets = [];
+    var taxonDeferreds = [];
     _.each(geojsonResults, function(location){
-//      console.dir(location.properties.species);
+      _.each(location.properties.species, function(species){
+          if(speciess.hasOwnProperty(species.taxonKey)){
+            speciess[species.numReds] += 1;
+            if(speciess[species.taxonKey].latestYear < species.latestYear){
+              speciess[species.taxonKey].latestYear = species.latestYear;
+            }
+            if(speciess[species.taxonKey].earliestYear > species.earliestYear){
+              speciess[species.taxonKey].earliestYear = species.earliestYear;
+            }
+          } else {
+            speciess[species.taxonKey] = {'name': species.name, 'earliestYear': species.earliestYear, 'latestYear': species.latestYear, 'numRecs': species.numRecs};
+            taxonDeferreds.push(getTaxonomy(species.taxonKey));
+          }
+        _.each(species.datasetKeys, function(datasetKey){
+          var processedDataset = _.findWhere(datasets, {datasetKey: datasetKey});
+          if(_.isUndefined(processedDataset)){
+            datasets.push({'key': datasetKey});
+          }
+        });
 
-//  function updateSpecies(gbifSpecies, speciesArray){
-    var species = _.findWhere(species, {taxonKey: location.properties.species.taxonKey})
-    if(_.isUndefined(species)){
-      speciesArray.push(location.properties.species.taxonKey);
-    }
+      });
     // else{
     //   if(!_.contains(species.datasetKeys, gbifSpecies.datasetKey)){
     //     species.datasetKeys.push(gbifSpecies.datasetKey);
@@ -621,13 +638,35 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
     //   if(species.earliestYear > gbifSpecies.year){
     //     species.earliestYear = gbifSpecies.year;
     //   }
-    }
+//    }
 //  }
 
-    console.dir(species);
 
 
     });
+
+
+    $.when.apply($, taxonDeferreds).done(function(){
+
+      //Add the vernacular name to the original species object
+      _.each(taxonDeferreds, function(deferred){
+        if(groups.hasOwnProperty(deferred.responseJSON.classKey)) {
+          groups[deferred.responseJSON.classKey].numSpecies += 1;
+          groups[deferred.responseJSON.classKey].numRecs += speciess[deferred.responseJSON.key].numRecs;
+        } else {
+          groups[deferred.responseJSON.classKey] = {'name': deferred.responseJSON.class, 'numSpecies': 1, 'numRecs': speciess[deferred.responseJSON.key].numRecs};
+        }
+      });
+      var groupArray = [];
+      _.each(groups, function(group){
+        groupArray.push(group);
+      });
+      var sortedGroups = _.sortBy(groupArray, function(group){return (-1 * group.numRecs);});
+      _.each(sortedGroups, function(group){
+        console.log(group.name + ': ' + group.numSpecies + ': ' + group.numRecs);
+      });
+    });
+
   }
 
 });
