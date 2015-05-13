@@ -141,3 +141,21 @@ a:focus {
   margin-left: 1px;
   margin-right: 5px;
 }
+
+#species-group-summary {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+#species-group-summary tr {
+    border-bottom: 1px solid #555;
+    text-align: center;
+}
+
+#species-group-summary td:first-child {
+    text-align: left;
+}
+
+#species-group-summary th:first-child {
+    text-align: left;
+}

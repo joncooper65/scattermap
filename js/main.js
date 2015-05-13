@@ -106,7 +106,14 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
       });
 
       //Populate summary page
-      $('#summary-button').click(generateSummary);
+      $('#summary-button').click(function(){
+        $('#species-group-summary > tbody').empty();
+        $.mobile.loading( "show", {
+          textVisible: true,
+          text: 'Generating summary'
+        });
+        generateSummary();
+      });
 
     }
 
@@ -166,7 +173,6 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
               error: function(e) {
                 waitingForRecords = false;
                 $.mobile.loading( "hide" );
-                console.log(e.getResponseHeader());
               },
               complete: function(e){
                 waitingForRecords = false;
@@ -602,7 +608,6 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
   }
 
   function generateSummary(){
-    $.mobile.loading( "show" );
     var speciess = new Object();
     var groups = new Object();
     var datasets = [];
@@ -655,9 +660,9 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
         });
         sortedGroups = _.sortBy(vernacularGroupsArray, function(group){return (-1 * group.numRecs);});
        }
-        _.each(sortedGroups, function(group){
-          console.log(group.name + ': ' + group.numSpecies + ': ' + group.numRecs);
-        });
+
+        addGroupsToPage(sortedGroups);
+
         $.mobile.loading( "hide" );
     });
 
@@ -689,7 +694,6 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
       var vernacularGroup = getVernacularGroup(group.key);
       //Try the kingdom, since Fungi are grouped at this level
       if(vernacularGroup === null){
-        console.log(group.kingdomKey);
         vernacularGroup = getVernacularGroup(group.kingdomKey);
       }
       //default to scientific if no vernacular was found for this group
@@ -719,6 +723,20 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
       });
     });
     return toReturn;
+  }
+
+  function addGroupsToPage(groups){
+    var $tableBody = $('#species-group-summary > tbody');
+    _.each(groups, function(group){
+      $tableBody.append(
+        $('<tr>').append(
+          $('<td>').text(group.name),
+          $('<td>').text(group.numSpecies),
+          $('<td>').text(group.numRecs)
+          )
+      );
+    });
+    $('#summary').enhanceWithin();
   }
 
 });
