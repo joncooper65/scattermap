@@ -20,13 +20,13 @@
 				<div data-role="popup" id="no-more-records-popup">
 					<p>There are no more records to add</p>
 				</div>
-				<h4></h4> 
-				<div data-role="navbar" data-grid="c">
+				<div data-role="navbar" data-grid="d">
 					<ul>
+						<li><a href="#app-info" id='info' data-role="button" data-inline="true" data-icon="info" data-iconpos="top" class="footer-menu">Info</a></li>
 						<li><a href="#settings" data-role="button" data-inline="true" data-icon="gear" data-iconpos="top" class="footer-menu">Settings</a></li>
-						<li><a href="#" id='geolocate-button' data-role="button" data-inline="true" data-icon="navigation" data-iconpos="top" class="footer-menu">Locate</a></li>
-						<li><a href="#" id='geolocate-button' data-role="button" data-inline="true" data-icon="info" data-iconpos="top" class="footer-menu">Info</a></li>
-						<li><a href="#" id='add-more-records' data-role="button" data-inline="true" data-icon="plus" data-iconpos="top" class="footer-menu">Locate</a></li>
+						<li><a href="#" id='geolocate-button' data-role="button" data-inline="true" data-icon="navigation" data-iconpos="top" class="footer-menu">My Location</a></li>
+						<li><a href="#summary" id='summary-button' data-role="button" data-inline="true" data-icon="action" data-iconpos="top" class="footer-menu">Summary</a></li>
+						<li><a href="#" id='add-more-records' data-role="button" data-inline="true" data-icon="plus" data-iconpos="top" class="footer-menu">Records</a></li>
 					</ul>
 				</div>
 			</div> 
@@ -90,6 +90,42 @@
 					<span id="species-name-intro"></span> has observations at this location from the following datasets:
 				</div>
 				<div id="dataset-info"></div>
+			</div>
+		</div>
+
+		<div data-role="page" id="app-info" data-theme="b">
+			<div data-role="header">
+    		<a href='#index' data-icon="carat-l" class="ui-btn-left">Map</a>
+				<h1>Wildlife Map</h1>
+			</div>
+			<div data-role="content">
+ 				<h3>About</h3>
+				<p>The Centre for Ecology & Hydrology has built this app to help you find out what plants and animals have been observered near you.</p>
+				<p>It is powered by the data services of the Global Biodiversity Information Facility (GBIF).  These services provide free and open access to the millions of wildlife observations that have been collected in the UK over many years.</p>
+				<p>Only observations made freely available by data providers are used.  The National Biodiversity Network has worked with these provders to make observations available.  The data providers are easy discover from the records appearing on the map.</p>
+			</div>
+		</div>
+
+		<div data-role="page" id="summary" data-theme="b">
+			<div data-role="header">
+    		<a href='#index' data-icon="carat-l" class="ui-btn-left">Map</a>
+				<h1>Summary</h1>
+			</div>
+			<div data-role="content">
+ 				<h3>Species groups</h3>
+ 				<div id='species-group'>
+ 					<table id='species-group-summary'>
+ 						<thead>
+ 							<tr>
+ 								<th>Group</th>
+ 								<th>Num species</th>
+ 								<th>Num records</th>
+ 							</tr>
+ 						</thead>
+ 						<tbody>
+ 						</tbody>
+ 					</table>
+ 				</div>
 			</div>
 		</div>
 	</body>
