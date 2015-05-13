@@ -602,6 +602,7 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
   }
 
   function generateSummary(){
+    $.mobile.loading( "show" );
     var speciess = new Object();
     var groups = new Object();
     var datasets = [];
@@ -628,33 +629,17 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
         });
 
       });
-    // else{
-    //   if(!_.contains(species.datasetKeys, gbifSpecies.datasetKey)){
-    //     species.datasetKeys.push(gbifSpecies.datasetKey);
-    //   }
-    //   if(species.latestYear < gbifSpecies.year){
-    //     species.latestYear = gbifSpecies.year;
-    //   }
-    //   if(species.earliestYear > gbifSpecies.year){
-    //     species.earliestYear = gbifSpecies.year;
-    //   }
-//    }
-//  }
-
-
-
     });
 
 
     $.when.apply($, taxonDeferreds).done(function(){
-
       //Add the vernacular name to the original species object
       _.each(taxonDeferreds, function(deferred){
         if(groups.hasOwnProperty(deferred.responseJSON.classKey)) {
           groups[deferred.responseJSON.classKey].numSpecies += 1;
           groups[deferred.responseJSON.classKey].numRecs += speciess[deferred.responseJSON.key].numRecs;
         } else {
-          groups[deferred.responseJSON.classKey] = {'name': deferred.responseJSON.class, 'numSpecies': 1, 'numRecs': speciess[deferred.responseJSON.key].numRecs};
+          groups[deferred.responseJSON.classKey] = {'key': deferred.responseJSON.classKey, 'kingdomKey': deferred.responseJSON.kingdomKey, 'name': deferred.responseJSON.class, 'numSpecies': 1, 'numRecs': speciess[deferred.responseJSON.key].numRecs};
         }
       });
       var groupArray = [];
@@ -662,11 +647,78 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
         groupArray.push(group);
       });
       var sortedGroups = _.sortBy(groupArray, function(group){return (-1 * group.numRecs);});
-      _.each(sortedGroups, function(group){
-        console.log(group.name + ': ' + group.numSpecies + ': ' + group.numRecs);
-      });
+      if(!getIsScientificNames()){
+        var vernacularGroups = scientificGroupsToVernacular(sortedGroups);
+        var vernacularGroupsArray = [];
+        _.each(vernacularGroups, function(group){
+          vernacularGroupsArray.push(group);
+        });
+        sortedGroups = _.sortBy(vernacularGroupsArray, function(group){return (-1 * group.numRecs);});
+       }
+        _.each(sortedGroups, function(group){
+          console.log(group.name + ': ' + group.numSpecies + ': ' + group.numRecs);
+        });
+        $.mobile.loading( "hide" );
     });
 
+  }
+
+  var vernacularGroupsData = [{'key': '131','value': 'Amphibians'},
+                          {'key': '797','value': 'Butterflies and moths'},
+                          {'key': '327,13,9','value': 'Bryophytes'},
+                          {'key': '212','value': 'Birds'},
+                          {'key': '1470','value': 'Beetles'},
+                          {'key': '194','value': 'Conifers'},
+                          {'key': '789','value': 'Dragonflies and damselflies'},
+                          {'key': '120,121,204,239,357','value': 'Fishes'},
+                          {'key': '220','value': 'Flowering plants'},
+                          {'key': '5','value': 'Fungi'},
+                          {'key': '1458','value': 'Grasshoppers and crickets'},
+                          {'key': '216','value': 'Insects'},
+                          {'key': '359','value': 'Mammals'},
+                          {'key': '52','value': 'Molluscs'},
+                          {'key': '715','value': 'Reptiles'},
+                          {'key': '1003,1225,787','value': 'River flies'},
+                          {'key': '1496','value': 'Spiders'}];
+
+  /*Takes the taxon group summary data in scientific form and converts to our custom vernacular form
+  */
+  function scientificGroupsToVernacular(scientificGroups){
+    var toReturn = {};
+    _.each(scientificGroups, function(group){
+      var vernacularGroup = getVernacularGroup(group.key);
+      //Try the kingdom, since Fungi are grouped at this level
+      if(vernacularGroup === null){
+        console.log(group.kingdomKey);
+        vernacularGroup = getVernacularGroup(group.kingdomKey);
+      }
+      //default to scientific if no vernacular was found for this group
+      if(vernacularGroup === null){
+        vernacularGroup = {'key': group.key, 'value': group.name};//, 'numSpecies': group.numSpecies, 'numRecs': group.numRecs};
+      }
+      if(toReturn.hasOwnProperty(vernacularGroup.key)){
+        toReturn[vernacularGroup.key].numSpecies += group.numSpecies;
+        toReturn[vernacularGroup.key].numRecs += group.numRecs;
+      } else {
+        toReturn[vernacularGroup.key] = {'key': vernacularGroup.key, 'name': vernacularGroup.value, 'numSpecies': group.numSpecies, 'numRecs': group.numRecs};
+      }
+    });
+    return toReturn;
+  }
+
+  /*This takes a gbif taxon key and returns the matching vernacular group object from our custom list 
+    return: our custom vernacular object for this gbif key, or else 
+    */
+  function getVernacularGroup(testKey){
+    var toReturn = null;
+    _.each(vernacularGroupsData, function(group){
+      _.each(group.key.split(','), function(key){
+        if(testKey == key){
+          toReturn = group;
+        }
+      });
+    });
+    return toReturn;
   }
 
 });
