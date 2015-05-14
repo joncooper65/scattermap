@@ -55,6 +55,18 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
     }
 
     function initialiseEvents(){
+
+      //Initialise the name preference when it is created - it has a dependency on local storage
+      $('#flip-name').flipswitch({
+        create: function(event, ui){
+          if(getIsScientificNames()){
+            $('#flip-name').prop('checked', true).flipswitch('refresh');
+           } else {
+             $('#flip-name').prop('checked', false).flipswitch('refresh')
+           }
+        }
+      })
+
       //namePreferenceChange
       $('#flip-name').change(function(){
         setIsScientificNames($(this).is(':checked'));
