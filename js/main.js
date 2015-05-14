@@ -644,10 +644,9 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
             datasets.push({'key': datasetKey});
           }
         });
-
       });
     });
-
+    processAndRenderDatasets(datasets);
 
     $.when.apply($, taxonDeferreds).done(function(){
       //Add the vernacular name to the original species object
@@ -677,7 +676,26 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
 
         $.mobile.loading( "hide" );
     });
+  }
 
+  function processAndRenderDatasets(datasets){
+    var datasetDeferreds = [];
+    _.each(datasets, function(dataset){
+      datasetDeferreds.push(getDatasetInfo(dataset.key));
+    });
+    $.when.apply($, datasetDeferreds).done(function(){
+      _.each(datasetDeferreds, function(deferred){
+        _.findWhere(datasets, {key: deferred.responseJSON.key}).title = deferred.responseJSON.title;
+      });
+      var sortedDatasets = _.sortBy(datasets, 'title');
+      var datasetContent = '<ul  class="datasets" data-role="listview" data-inset="true">';
+      _.each(sortedDatasets, function(dataset){
+        datasetContent += '<li><a href="http://www.gbif.org/dataset/' + dataset.key + '" target="_new">' + dataset.title + '</a></li>'
+      });
+      datasetContent += '</ul>'
+      $('#summary-datasets').html(datasetContent);
+      $('#summar').enhanceWithin();
+    });
   }
 
   var vernacularGroupsData = [{'key': '131','value': 'Amphibians'},

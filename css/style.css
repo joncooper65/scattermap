@@ -159,3 +159,10 @@ a:focus {
 #species-group-summary th:first-child {
     text-align: left;
 }
+
+.datasets a {
+  font-weight: normal;
+  text-overflow: ellipsis;
+  overflow: visible;
+  white-space: normal !important;
+}
