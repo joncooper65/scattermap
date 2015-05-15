@@ -21,7 +21,8 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
     var waitingForRecords = false;//Don't fire any other requests if this is true - helps with map panning
     var boundingBoxOfRecords;//Used to track the bbox of the current set of species records, primarily to refresh the records if the map bounding box is different
     var yearOfRecords;//Used to track the year filter of the current set of species records, primarily to refresh the records if the slider's year value is diffferent
-    geojsonResults = {};//Data model for current view
+    var geojsonResults = {};//Data model for current view
+    summaryData = {'loadingDatasets': false, 'loadingGroups': false, 'isLoading': function(){return this.loadingDatasets || this.loadingGroups;}}; //Tracks the loading of elements on the summary page for showing/hiding the loader
 
     initialise();
 
@@ -119,12 +120,24 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
 
       //Populate summary page
       $('#summary-button').click(function(){
-        $('#species-group-summary > tbody').empty();
-        $.mobile.loading( "show", {
-          textVisible: true,
-          text: 'Generating summary'
-        });
-        generateSummary();
+        generateSummary(geojsonResults, moreRecordsText(totalNumRecords), moreRecordsPercentage(totalNumRecords));
+      });
+
+      //Any events when pages load
+      $(document).on("pagecontainershow", function(event, ui){
+        var pageId = $('body').pagecontainer('getActivePage').prop('id');
+        if(pageId == 'summary'){
+          if(summaryData.isLoading()){
+            $.mobile.loading( "show", {
+              textVisible: true,
+              text: 'Generating summary'
+            });
+          }
+        }
+      });
+
+      $(document.body).on("summarygenerated", function(event){
+        $.mobile.loading( "hide");
       });
 
     }
@@ -180,7 +193,8 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
                     }
                 }).addTo(map);
                 $.mobile.loading( "hide" );
-                $('#add-more-records').text(moreRecordsText());
+                $('#add-more-records').text(moreRecordsText(totalNumRecords));
+                $('#summary-total-recs').html(totalNumRecords);
               },
               error: function(e) {
                 waitingForRecords = false;
@@ -201,11 +215,19 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
       }
     }
 
-    function moreRecordsText(){
+    function moreRecordsText(totalNumRecords){
       if(offset > totalNumRecords){
         return totalNumRecords + ' of ' + totalNumRecords;
       } else {
         return offset + ' of ' + totalNumRecords;
+      }
+    }
+
+    function moreRecordsPercentage(totalNumRecords){
+      if(offset > totalNumRecords){
+        return 100;
+      } else {
+        return Math.round((offset/totalNumRecords) * 100);
       }
     }
 
@@ -619,7 +641,15 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
     $('#index').enhanceWithin();
   }
 
-  function generateSummary(){
+  function generateSummary(geojsonResults, moreRecordsText, moreRecordsPercentage){
+    summaryData.loadingGroups = true;
+    summaryData.loadingDatasets = true;
+    $('#summary-datasets').empty();
+    $('#species-group-summary > tbody').empty();
+    $('#summary-num-markers').html(Object.keys(geojsonResults).length);
+    $('#summary-num-recs').html(moreRecordsText);
+    $('#summary-percentage-recs').html(moreRecordsPercentage);
+
     var speciess = new Object();
     var groups = new Object();
     var datasets = [];
@@ -627,7 +657,7 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
     _.each(geojsonResults, function(location){
       _.each(location.properties.species, function(species){
           if(speciess.hasOwnProperty(species.taxonKey)){
-            speciess[species.numReds] += 1;
+            speciess[species.taxonKey].numRecs += 1;
             if(speciess[species.taxonKey].latestYear < species.latestYear){
               speciess[species.taxonKey].latestYear = species.latestYear;
             }
@@ -646,7 +676,13 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
         });
       });
     });
-    processAndRenderDatasets(datasets);
+    // var numSpeciesOnMap = _.reduce(speciess, function(memo, species){
+    //   return memo + species.numRecs;
+    // }, 0);
+
+    // $('#summary-num-recs').html(numSpeciesOnMap);
+    $('#summary-num-species').html(Object.keys(speciess).length);
+    processAndRenderDatasets(datasets, true);
 
     $.when.apply($, taxonDeferreds).done(function(){
       //Add the vernacular name to the original species object
@@ -670,15 +706,18 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
           vernacularGroupsArray.push(group);
         });
         sortedGroups = _.sortBy(vernacularGroupsArray, function(group){return (-1 * group.numRecs);});
-       }
-
-        addGroupsToPage(sortedGroups);
-
-        $.mobile.loading( "hide" );
+      }
+      addGroupsToPage(sortedGroups);
+      summaryData.loadingGroups = false;
+      if(!summaryData.isLoading()){
+        document.body.dispatchEvent(new CustomEvent('summarygenerated'));
+      }
     });
   }
 
-  function processAndRenderDatasets(datasets){
+
+
+  function processAndRenderDatasets(datasets, loadingGroups){
     var datasetDeferreds = [];
     _.each(datasets, function(dataset){
       datasetDeferreds.push(getDatasetInfo(dataset.key));
@@ -687,14 +726,25 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
       _.each(datasetDeferreds, function(deferred){
         _.findWhere(datasets, {key: deferred.responseJSON.key}).title = deferred.responseJSON.title;
       });
-      var sortedDatasets = _.sortBy(datasets, 'title');
+
+      var sortedDatasets = _.chain(datasets)
+        .filter(function(dataset){
+          return dataset.hasOwnProperty('title');
+        })
+        .sortBy('title')
+        .value();
+
       var datasetContent = '<ul  class="datasets" data-role="listview" data-inset="true">';
       _.each(sortedDatasets, function(dataset){
         datasetContent += '<li><a href="http://www.gbif.org/dataset/' + dataset.key + '" target="_new">' + dataset.title + '</a></li>'
       });
       datasetContent += '</ul>'
       $('#summary-datasets').html(datasetContent);
-      $('#summar').enhanceWithin();
+      $('#summary-datasets').enhanceWithin();
+      summaryData.loadingDatasets = false;
+      if(!summaryData.isLoading()){
+        document.body.dispatchEvent(new CustomEvent('summarygenerated'));
+      }
     });
   }
 
