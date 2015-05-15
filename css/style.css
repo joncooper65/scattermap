@@ -161,7 +161,7 @@ a:focus {
 }
 
 .datasets a {
-  font-weight: normal;
+  font-weight: normal !important;
   text-overflow: ellipsis;
   overflow: visible;
   white-space: normal !important;

@@ -654,8 +654,16 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
     var groups = new Object();
     var datasets = [];
     var taxonDeferreds = [];
+    var earliestRecord = 3000;
+    var latestRecord = 0;
     _.each(geojsonResults, function(location){
       _.each(location.properties.species, function(species){
+          if(species.earliestYear < earliestRecord){
+            earliestRecord = species.earliestYear;
+          }
+          if(species.latestYear > latestRecord){
+            latestRecord = species.latestYear;
+          }
           if(speciess.hasOwnProperty(species.taxonKey)){
             speciess[species.taxonKey].numRecs += 1;
             if(speciess[species.taxonKey].latestYear < species.latestYear){
@@ -676,11 +684,9 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
         });
       });
     });
-    // var numSpeciesOnMap = _.reduce(speciess, function(memo, species){
-    //   return memo + species.numRecs;
-    // }, 0);
 
-    // $('#summary-num-recs').html(numSpeciesOnMap);
+    $('#summary-earliest-rec').html(earliestRecord);
+    $('#summary-latest-rec').html(latestRecord);
     $('#summary-num-species').html(Object.keys(speciess).length);
     processAndRenderDatasets(datasets, true);
 
@@ -714,8 +720,6 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
       }
     });
   }
-
-
 
   function processAndRenderDatasets(datasets, loadingGroups){
     var datasetDeferreds = [];

@@ -112,27 +112,28 @@
 				<h1>Summary</h1>
 			</div>
 			<div data-role="content">
-				<p>There are <span id='summary-num-markers'></span> placemarkers on your map containing <span id='summary-num-species'></span> species.</p>
+				<p>There are <span id='summary-num-markers'></span> placemarkers on your map containing <span id='summary-num-species'></span> species from <span id='summary-earliest-rec'></span> to <span id='summary-latest-rec'></span>.</p>
 
-				<p>Your map contains <span id='summary-percentage-recs'></span>% (<span id='summary-num-recs'></span>) of the sightings available from Gbif.
+				<p>Your map has <span id='summary-percentage-recs'></span>% (<span id='summary-num-recs'></span>) of the sightings available from Gbif.
 
- 				<h3>Species groups</h3>
- 				<div>
- 					<table id='species-group-summary'>
- 						<thead>
- 							<tr>
- 								<th><span id=''>Group</span></th>
- 								<th>Num species</th>
- 								<th>Num records</th>
- 							</tr>
- 						</thead>
- 						<tbody>
- 						</tbody>
- 					</table>
- 				</div>
- 				<h3>Datasets</h3>
- 				<div id='summary-datasets'>
- 				</div>
+ 				<div data-role="collapsible" data-theme="b" data-content-theme="b">
+	 				<h4>Species groups</h4>
+					<table id='species-group-summary'>
+						<thead>
+							<tr>
+								<th><span id=''>Group</span></th>
+								<th>Num species</th>
+								<th>Num records</th>
+							</tr>
+						</thead>
+						<tbody>
+						</tbody>
+					</table>
+				</div>
+ 				<div data-role="collapsible" data-theme="b" data-content-theme="b">
+					<h4>Datasets</h4>
+ 						<div id='summary-datasets' />
+				</div>
 			</div>
 		</div>
 	</body>
