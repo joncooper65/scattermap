@@ -689,6 +689,7 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
     $('#summary-latest-rec').html(latestRecord);
     $('#summary-num-species').html(Object.keys(speciess).length);
     processAndRenderDatasets(datasets, true);
+    renderTop10Species(speciess);
 
     $.when.apply($, taxonDeferreds).done(function(){
       //Add the vernacular name to the original species object
@@ -719,6 +720,17 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
         document.body.dispatchEvent(new CustomEvent('summarygenerated'));
       }
     });
+  }
+
+  function renderTop10Species(speciess){
+      var speciesArray = [];
+      _.each(speciess, function(species){
+        speciesArray.push(species);
+      });
+      var top10Species = _.sortBy(speciesArray, function(species){return (-1 * species.numRecs);}).slice(0,9);
+      _.each(top10Species, function(species){
+        console.log(species.name + ': ' + species.numRecs);
+      });
   }
 
   function processAndRenderDatasets(datasets, loadingGroups){
