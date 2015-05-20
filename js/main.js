@@ -808,6 +808,7 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
                           {'key': '52','value': 'Molluscs'},
                           {'key': '715','value': 'Reptiles'},
                           {'key': '1003,1225,787','value': 'River flies'},
+                          {'key': '225','value': 'Slugs and snails'},
                           {'key': '1496','value': 'Spiders'}];
 
   /*Takes the taxon group summary data in scientific form and converts to our custom vernacular form
