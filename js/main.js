@@ -646,6 +646,7 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
     summaryData.loadingDatasets = true;
     $('#summary-datasets').empty();
     $('#species-group-summary > tbody').empty();
+    $('#top-ten-species > tbody').empty();
     $('#summary-num-markers').html(Object.keys(geojsonResults).length);
     $('#summary-num-recs').html(moreRecordsText);
     $('#summary-percentage-recs').html(moreRecordsPercentage);
@@ -727,10 +728,13 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
       _.each(speciess, function(species){
         speciesArray.push(species);
       });
-      var top10Species = _.sortBy(speciesArray, function(species){return (-1 * species.numRecs);}).slice(0,9);
-      _.each(top10Species, function(species){
-        console.log(species.name + ': ' + species.numRecs);
-      });
+      var top10Species = _.sortBy(speciesArray, function(species){return (-1 * species.numRecs);}).slice(0,10);
+      var title = 'Top 10 species';
+      if(top10Species.length < 10){
+        title = 'All species';
+      }
+      $('#summary-species-title').html(title);
+      addTop10speciesToPage(top10Species);
   }
 
   function processAndRenderDatasets(datasets, loadingGroups){
@@ -829,6 +833,26 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
           $('<td>').text(group.name),
           $('<td>').text(group.numSpecies),
           $('<td>').text(group.numRecs)
+          )
+      );
+    });
+    $('#summary').enhanceWithin();
+  }
+
+  function addTop10speciesToPage(top10Species){
+    var $tableBody = $('#top-ten-species > tbody');
+      console.log(getIsScientificNames());
+    _.each(top10Species, function(species){
+      var name = species.name;
+      console.log(species.vernacularName);
+      if(!getIsScientificNames()){
+        console.log(species);
+        name = species.vernacularName;
+      }
+      $tableBody.append(
+        $('<tr>').append(
+          $('<td>').text(species.name),
+          $('<td>').text(species.numRecs)
           )
       );
     });

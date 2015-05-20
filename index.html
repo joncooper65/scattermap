@@ -35,7 +35,7 @@
 		<div data-role="page" id="settings" data-theme="b">
 			<div data-role="header">
     		<a href='#index' data-icon="carat-l" class="ui-btn-left">Map</a>
-				<h1>Wildlife Map</h1>
+				<h1>Settings</h1>
 			</div>
 			<div data-role="content">
 				<form>
@@ -81,7 +81,7 @@
 		<div data-role="page" id="species-info-page" data-theme="b">
 			<div data-role="header">
     		<a href='#index' data-icon="carat-l" class="ui-btn-left">Map</a>
-				<h1>Wildlife Map</h1>
+				<h1>Species Info</h1>
 			</div>
 			<div data-role="content" class="species-info-content">
 				<h3 id="species-name-title"></h3>
@@ -96,13 +96,11 @@
 		<div data-role="page" id="app-info" data-theme="b">
 			<div data-role="header">
     		<a href='#index' data-icon="carat-l" class="ui-btn-left">Map</a>
-				<h1>Wildlife Map</h1>
+				<h1>Info</h1>
 			</div>
 			<div data-role="content">
- 				<h3>About</h3>
-				<p>The Centre for Ecology & Hydrology has built this app to help you find out what plants and animals have been observered near you.</p>
-				<p>It is powered by the data services of the Global Biodiversity Information Facility (GBIF).  These services provide free and open access to the millions of wildlife observations that have been collected in the UK over many years.</p>
-				<p>Only observations made freely available by data providers are used.  The National Biodiversity Network has worked with these provders to make observations available.  The data providers are easy discover from the records appearing on the map.</p>
+				<p>This app has been built to help you find out what plants and animals have been observered near you or anywhere.</p>
+				<p>It is powered by the data services of the Global Biodiversity Information Facility (GBIF).  These services give access to the millions of wildlife observations throughout the world that data owners have made freely available.</p>
 			</div>
 		</div>
 
@@ -113,14 +111,23 @@
 			</div>
 			<div data-role="content">
 				<p>There are <span id='summary-num-markers'></span> placemarkers on your map containing <span id='summary-num-species'></span> species from <span id='summary-earliest-rec'></span> to <span id='summary-latest-rec'></span>.</p>
-				<p>Your map has <span id='summary-percentage-recs'></span>% (<span id='summary-num-recs'></span>) of the sightings available from Gbif.
+				<p>Your map has <span id='summary-percentage-recs'></span>% (<span id='summary-num-recs'></span>) of the sightings available from Gbif for the area shown.
  				<div data-role="collapsible" data-theme="b" data-content-theme="b">
- 					<h4>Top 10 species</h4>
- 					
+ 					<h4><span id='summary-species-title'/></h4>
+					<table id='top-ten-species' class='summary-table'>
+						<thead>
+							<tr>
+								<th>Species</th>
+								<th>Num records</th>
+							</tr>
+						</thead>
+						<tbody>
+						</tbody>
+					</table>
  				</div>
  				<div data-role="collapsible" data-theme="b" data-content-theme="b">
 	 				<h4>Species groups</h4>
-					<table id='species-group-summary'>
+					<table id='species-group-summary' class='summary-table'>
 						<thead>
 							<tr>
 								<th><span id=''>Group</span></th>
