@@ -11,6 +11,9 @@ The first iteration aims to take the Gbif services as far as they can go.  Since
 
 dev notes
 ---------
+
+Would like to move over to backbone, coffescript, freemarker and setup proper grunt tasks for building, dist, etc
+
 sudo apt-get install nodejs
 
 sudo apt-get install npm
@@ -22,8 +25,6 @@ sudo npm install -g bower
 will probably need to do: sudo ln -s /usr/bin/nodejs /usr/bin/node
 
 bower install
-
-Would like to move over to backbone, coffescript, freemarker and setup proper grunt tasks for building, dist, etc
 
 mongodb install on linux: http://docs.monanual/tutorial/install-mongodb-on-ubuntu/
 
