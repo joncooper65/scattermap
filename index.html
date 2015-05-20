@@ -11,7 +11,7 @@
 	<body>
 		<div data-role="page" id="index" data-theme="b">
 			<div data-role="header">
-				<h1>Wildlife Map</h1><br/><br/>
+				<h1>Map My Wildlife</h1><br/><br/>
 			</div>
 			<div data-role="content" id="map-page">
 				<div id="map"></div>
@@ -112,20 +112,30 @@
 				<h1>Summary</h1>
 			</div>
 			<div data-role="content">
- 				<h3>Species groups</h3>
- 				<div id='species-group'>
- 					<table id='species-group-summary'>
- 						<thead>
- 							<tr>
- 								<th>Group</th>
- 								<th>Num species</th>
- 								<th>Num records</th>
- 							</tr>
- 						</thead>
- 						<tbody>
- 						</tbody>
- 					</table>
+				<p>There are <span id='summary-num-markers'></span> placemarkers on your map containing <span id='summary-num-species'></span> species from <span id='summary-earliest-rec'></span> to <span id='summary-latest-rec'></span>.</p>
+				<p>Your map has <span id='summary-percentage-recs'></span>% (<span id='summary-num-recs'></span>) of the sightings available from Gbif.
+ 				<div data-role="collapsible" data-theme="b" data-content-theme="b">
+ 					<h4>Top 10 species</h4>
+ 					
  				</div>
+ 				<div data-role="collapsible" data-theme="b" data-content-theme="b">
+	 				<h4>Species groups</h4>
+					<table id='species-group-summary'>
+						<thead>
+							<tr>
+								<th><span id=''>Group</span></th>
+								<th>Num species</th>
+								<th>Num records</th>
+							</tr>
+						</thead>
+						<tbody>
+						</tbody>
+					</table>
+				</div>
+ 				<div data-role="collapsible" data-theme="b" data-content-theme="b">
+					<h4>Datasets</h4>
+ 						<div id='summary-datasets' />
+				</div>
 			</div>
 		</div>
 	</body>
