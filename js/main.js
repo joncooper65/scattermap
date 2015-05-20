@@ -794,7 +794,7 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
 
   var vernacularGroupsData = [{'key': '131','value': 'Amphibians'},
                           {'key': '797','value': 'Butterflies and moths'},
-                          {'key': '327,13,9','value': 'Bryophytes'},
+                          {'key': '327,13,9,126,125','value': 'Bryophytes'},
                           {'key': '212','value': 'Birds'},
                           {'key': '1470','value': 'Beetles'},
                           {'key': '194','value': 'Conifers'},
