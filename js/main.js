@@ -674,7 +674,7 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
               speciess[species.taxonKey].earliestYear = species.earliestYear;
             }
           } else {
-            speciess[species.taxonKey] = {'name': species.name, 'earliestYear': species.earliestYear, 'latestYear': species.latestYear, 'numRecs': species.numRecs};
+            speciess[species.taxonKey] = {'taxonKey': species.taxonKey, 'name': species.name, 'earliestYear': species.earliestYear, 'latestYear': species.latestYear, 'numRecs': species.numRecs};
             taxonDeferreds.push(getTaxonomy(species.taxonKey));
           }
         _.each(species.datasetKeys, function(datasetKey){
@@ -724,17 +724,41 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
   }
 
   function renderTop10Species(speciess){
-      var speciesArray = [];
-      _.each(speciess, function(species){
-        speciesArray.push(species);
+    var speciesArray = [];
+    _.each(speciess, function(species){
+      speciesArray.push(species);
+    });
+    var top10Species = _.sortBy(speciesArray, function(species){return (-1 * species.numRecs);}).slice(0,10);
+    var title = 'Top 10 species';
+    if(top10Species.length < 10){
+      title = 'All species';
+    }
+    $('#summary-species-title').html(title);
+    if(!getIsScientificNames()){
+      var deferreds = [];
+      _.each(top10Species, function(species){
+        deferreds.push(getTaxonomy(species.taxonKey));
       });
-      var top10Species = _.sortBy(speciesArray, function(species){return (-1 * species.numRecs);}).slice(0,10);
-      var title = 'Top 10 species';
-      if(top10Species.length < 10){
-        title = 'All species';
-      }
-      $('#summary-species-title').html(title);
+      $.when.apply($, deferreds).done(function(){
+        var vernacularSpecies = [];
+        var scientificSpecies = [];
+
+        //Add the vernacular name to the species object
+        _.each(deferreds, function(deferred){
+          _.each(top10Species, function(species){
+            var isRequiredSpecies = (species.taxonKey == deferred.responseJSON.speciesKey);
+            if(isRequiredSpecies){
+              if(!_.isUndefined(deferred.responseJSON.vernacularName)){
+                species.vernacularName = firstToUpper(deferred.responseJSON.vernacularName);
+              }
+            }
+          });
+        });
+        addTop10speciesToPage(top10Species);
+      });
+    } else {
       addTop10speciesToPage(top10Species);
+  }
   }
 
   function processAndRenderDatasets(datasets, loadingGroups){
@@ -841,22 +865,23 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
 
   function addTop10speciesToPage(top10Species){
     var $tableBody = $('#top-ten-species > tbody');
-      console.log(getIsScientificNames());
     _.each(top10Species, function(species){
-      var name = species.name;
-      console.log(species.vernacularName);
+      var name = '<i>' + species.name + '</i>';
       if(!getIsScientificNames()){
-        console.log(species);
-        name = species.vernacularName;
+        if(!_.isUndefined(species.vernacularName)){
+          name = species.vernacularName;
+        }
       }
       $tableBody.append(
         $('<tr>').append(
-          $('<td>').text(species.name),
+          $('<td>').html(name),
           $('<td>').text(species.numRecs)
           )
       );
     });
     $('#summary').enhanceWithin();
   }
+
+
 
 });
