@@ -1,4 +1,4 @@
-Map my wildife
+Map My Wildife
 =============
 
 An app to map widlife records delivered from Gbif rest services.
@@ -9,12 +9,8 @@ The vision is to have a location aware map sprinkled with interactive place mark
 
 The first iteration aims to take the Gbif services as far as they can go.  Since they aren't designed to support an app like this we want to find what works and what doesn't, and what further back end services are needed.  It will also drive out design and features we like.
 
-
-Random dev notes
-----------------
-
-Setup (can move these over to vagrant file eventually)
------
+dev notes
+---------
 sudo apt-get install nodejs
 
 sudo apt-get install npm
@@ -26,6 +22,8 @@ sudo npm install -g bower
 will probably need to do: sudo ln -s /usr/bin/nodejs /usr/bin/node
 
 bower install
+
+Would like to move over to backbone, coffescript, freemarker and setup proper grunt tasks for building, dist, etc
 
 mongodb install on linux: http://docs.monanual/tutorial/install-mongodb-on-ubuntu/
 
