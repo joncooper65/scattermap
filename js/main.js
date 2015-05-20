@@ -21,7 +21,8 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
     var waitingForRecords = false;//Don't fire any other requests if this is true - helps with map panning
     var boundingBoxOfRecords;//Used to track the bbox of the current set of species records, primarily to refresh the records if the map bounding box is different
     var yearOfRecords;//Used to track the year filter of the current set of species records, primarily to refresh the records if the slider's year value is diffferent
-    geojsonResults = {};//Data model for current view
+    var geojsonResults = {};//Data model for current view
+    summaryData = {'loadingDatasets': false, 'loadingGroups': false, 'isLoading': function(){return this.loadingDatasets || this.loadingGroups;}}; //Tracks the loading of elements on the summary page for showing/hiding the loader
 
     initialise();
 
@@ -55,6 +56,18 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
     }
 
     function initialiseEvents(){
+
+      //Initialise the name preference when it is created - it has a dependency on local storage
+      $('#flip-name').flipswitch({
+        create: function(event, ui){
+          if(getIsScientificNames()){
+            $('#flip-name').prop('checked', true).flipswitch('refresh');
+           } else {
+             $('#flip-name').prop('checked', false).flipswitch('refresh')
+           }
+        }
+      })
+
       //namePreferenceChange
       $('#flip-name').change(function(){
         setIsScientificNames($(this).is(':checked'));
@@ -103,6 +116,28 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
       //Handle geolocation event
       $('#geolocate-button').click(function(){
         map.locate({setView: true, zoom: 5});
+      });
+
+      //Populate summary page
+      $('#summary-button').click(function(){
+        generateSummary(geojsonResults, moreRecordsText(totalNumRecords), moreRecordsPercentage(totalNumRecords));
+      });
+
+      //Any events when pages load
+      $(document).on("pagecontainershow", function(event, ui){
+        var pageId = $('body').pagecontainer('getActivePage').prop('id');
+        if(pageId == 'summary'){
+          if(summaryData.isLoading()){
+            $.mobile.loading( "show", {
+              textVisible: true,
+              text: 'Generating summary'
+            });
+          }
+        }
+      });
+
+      $(document.body).on("summarygenerated", function(event){
+        $.mobile.loading( "hide");
       });
 
     }
@@ -158,12 +193,12 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
                     }
                 }).addTo(map);
                 $.mobile.loading( "hide" );
-                $('#add-more-records').text(moreRecordsText());
+                $('#add-more-records').text(moreRecordsText(totalNumRecords));
+                $('#summary-total-recs').html(totalNumRecords);
               },
               error: function(e) {
                 waitingForRecords = false;
                 $.mobile.loading( "hide" );
-                console.log(e.getResponseHeader());
               },
               complete: function(e){
                 waitingForRecords = false;
@@ -180,11 +215,19 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
       }
     }
 
-    function moreRecordsText(){
+    function moreRecordsText(totalNumRecords){
       if(offset > totalNumRecords){
         return totalNumRecords + ' of ' + totalNumRecords;
       } else {
         return offset + ' of ' + totalNumRecords;
+      }
+    }
+
+    function moreRecordsPercentage(totalNumRecords){
+      if(offset > totalNumRecords){
+        return 100;
+      } else {
+        return Math.round((offset/totalNumRecords) * 100);
       }
     }
 
@@ -343,11 +386,12 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
       if(species.earliestYear > gbifSpecies.year){
         species.earliestYear = gbifSpecies.year;
       }
+      species.numRecs += 1;
     }
   }
 
   function getSpeciesFromGbif(gbifSpecies){
-    var species = {"taxonKey": gbifSpecies.taxonKey, "name": firstToUpper(gbifSpecies.species), "earliestYear": gbifSpecies.year, "latestYear": gbifSpecies.year, "datasetKeys": []};
+    var species = {"taxonKey": gbifSpecies.taxonKey, "name": firstToUpper(gbifSpecies.species), "earliestYear": gbifSpecies.year, "latestYear": gbifSpecies.year, "datasetKeys": [], "numRecs": 1};
     species.datasetKeys.push(gbifSpecies.datasetKey);
     return species;
   }
@@ -596,5 +640,248 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
     $('.ui-navbar a').removeClass('ui-btn-active');
     $('#index').enhanceWithin();
   }
+
+  function generateSummary(geojsonResults, moreRecordsText, moreRecordsPercentage){
+    summaryData.loadingGroups = true;
+    summaryData.loadingDatasets = true;
+    $('#summary-datasets').empty();
+    $('#species-group-summary > tbody').empty();
+    $('#top-ten-species > tbody').empty();
+    $('#summary-num-markers').html(Object.keys(geojsonResults).length);
+    $('#summary-num-recs').html(moreRecordsText);
+    $('#summary-percentage-recs').html(moreRecordsPercentage);
+
+    var speciess = new Object();
+    var groups = new Object();
+    var datasets = [];
+    var taxonDeferreds = [];
+    var earliestRecord = 3000;
+    var latestRecord = 0;
+    _.each(geojsonResults, function(location){
+      _.each(location.properties.species, function(species){
+          if(species.earliestYear < earliestRecord){
+            earliestRecord = species.earliestYear;
+          }
+          if(species.latestYear > latestRecord){
+            latestRecord = species.latestYear;
+          }
+          if(speciess.hasOwnProperty(species.taxonKey)){
+            speciess[species.taxonKey].numRecs += 1;
+            if(speciess[species.taxonKey].latestYear < species.latestYear){
+              speciess[species.taxonKey].latestYear = species.latestYear;
+            }
+            if(speciess[species.taxonKey].earliestYear > species.earliestYear){
+              speciess[species.taxonKey].earliestYear = species.earliestYear;
+            }
+          } else {
+            speciess[species.taxonKey] = {'taxonKey': species.taxonKey, 'name': species.name, 'earliestYear': species.earliestYear, 'latestYear': species.latestYear, 'numRecs': species.numRecs};
+            taxonDeferreds.push(getTaxonomy(species.taxonKey));
+          }
+        _.each(species.datasetKeys, function(datasetKey){
+          var processedDataset = _.findWhere(datasets, {datasetKey: datasetKey});
+          if(_.isUndefined(processedDataset)){
+            datasets.push({'key': datasetKey});
+          }
+        });
+      });
+    });
+
+    $('#summary-earliest-rec').html(earliestRecord);
+    $('#summary-latest-rec').html(latestRecord);
+    $('#summary-num-species').html(Object.keys(speciess).length);
+    processAndRenderDatasets(datasets, true);
+    renderTop10Species(speciess);
+
+    $.when.apply($, taxonDeferreds).done(function(){
+      //Add the vernacular name to the original species object
+      _.each(taxonDeferreds, function(deferred){
+        if(groups.hasOwnProperty(deferred.responseJSON.classKey)) {
+          groups[deferred.responseJSON.classKey].numSpecies += 1;
+          groups[deferred.responseJSON.classKey].numRecs += speciess[deferred.responseJSON.key].numRecs;
+        } else {
+          groups[deferred.responseJSON.classKey] = {'key': deferred.responseJSON.classKey, 'kingdomKey': deferred.responseJSON.kingdomKey, 'name': deferred.responseJSON.class, 'numSpecies': 1, 'numRecs': speciess[deferred.responseJSON.key].numRecs};
+        }
+      });
+      var groupArray = [];
+      _.each(groups, function(group){
+        groupArray.push(group);
+      });
+      var sortedGroups = _.sortBy(groupArray, function(group){return (-1 * group.numRecs);});
+      if(!getIsScientificNames()){
+        var vernacularGroups = scientificGroupsToVernacular(sortedGroups);
+        var vernacularGroupsArray = [];
+        _.each(vernacularGroups, function(group){
+          vernacularGroupsArray.push(group);
+        });
+        sortedGroups = _.sortBy(vernacularGroupsArray, function(group){return (-1 * group.numRecs);});
+      }
+      addGroupsToPage(sortedGroups);
+      summaryData.loadingGroups = false;
+      if(!summaryData.isLoading()){
+        document.body.dispatchEvent(new CustomEvent('summarygenerated'));
+      }
+    });
+  }
+
+  function renderTop10Species(speciess){
+    var speciesArray = [];
+    _.each(speciess, function(species){
+      speciesArray.push(species);
+    });
+    var top10Species = _.sortBy(speciesArray, function(species){return (-1 * species.numRecs);}).slice(0,10);
+    var title = 'Top 10 species';
+    if(top10Species.length < 10){
+      title = 'All species';
+    }
+    $('#summary-species-title').html(title);
+    if(!getIsScientificNames()){
+      var deferreds = [];
+      _.each(top10Species, function(species){
+        deferreds.push(getTaxonomy(species.taxonKey));
+      });
+      $.when.apply($, deferreds).done(function(){
+        var vernacularSpecies = [];
+        var scientificSpecies = [];
+
+        //Add the vernacular name to the species object
+        _.each(deferreds, function(deferred){
+          _.each(top10Species, function(species){
+            var isRequiredSpecies = (species.taxonKey == deferred.responseJSON.speciesKey);
+            if(isRequiredSpecies){
+              if(!_.isUndefined(deferred.responseJSON.vernacularName)){
+                species.vernacularName = firstToUpper(deferred.responseJSON.vernacularName);
+              }
+            }
+          });
+        });
+        addTop10speciesToPage(top10Species);
+      });
+    } else {
+      addTop10speciesToPage(top10Species);
+  }
+  }
+
+  function processAndRenderDatasets(datasets, loadingGroups){
+    var datasetDeferreds = [];
+    _.each(datasets, function(dataset){
+      datasetDeferreds.push(getDatasetInfo(dataset.key));
+    });
+    $.when.apply($, datasetDeferreds).done(function(){
+      _.each(datasetDeferreds, function(deferred){
+        _.findWhere(datasets, {key: deferred.responseJSON.key}).title = deferred.responseJSON.title;
+      });
+
+      var sortedDatasets = _.chain(datasets)
+        .filter(function(dataset){
+          return dataset.hasOwnProperty('title');
+        })
+        .sortBy('title')
+        .value();
+
+      var datasetContent = '<ul  class="datasets" data-role="listview" data-inset="true">';
+      _.each(sortedDatasets, function(dataset){
+        datasetContent += '<li><a href="http://www.gbif.org/dataset/' + dataset.key + '" target="_new">' + dataset.title + '</a></li>'
+      });
+      datasetContent += '</ul>'
+      $('#summary-datasets').html(datasetContent);
+      $('#summary-datasets').enhanceWithin();
+      summaryData.loadingDatasets = false;
+      if(!summaryData.isLoading()){
+        document.body.dispatchEvent(new CustomEvent('summarygenerated'));
+      }
+    });
+  }
+
+  var vernacularGroupsData = [{'key': '131','value': 'Amphibians'},
+                          {'key': '797','value': 'Butterflies and moths'},
+                          {'key': '327,13,9','value': 'Bryophytes'},
+                          {'key': '212','value': 'Birds'},
+                          {'key': '1470','value': 'Beetles'},
+                          {'key': '194','value': 'Conifers'},
+                          {'key': '789','value': 'Dragonflies and damselflies'},
+                          {'key': '120,121,204,239,357','value': 'Fishes'},
+                          {'key': '220','value': 'Flowering plants'},
+                          {'key': '5','value': 'Fungi'},
+                          {'key': '1458','value': 'Grasshoppers and crickets'},
+                          {'key': '216','value': 'Insects'},
+                          {'key': '359','value': 'Mammals'},
+                          {'key': '52','value': 'Molluscs'},
+                          {'key': '715','value': 'Reptiles'},
+                          {'key': '1003,1225,787','value': 'River flies'},
+                          {'key': '1496','value': 'Spiders'}];
+
+  /*Takes the taxon group summary data in scientific form and converts to our custom vernacular form
+  */
+  function scientificGroupsToVernacular(scientificGroups){
+    var toReturn = {};
+    _.each(scientificGroups, function(group){
+      var vernacularGroup = getVernacularGroup(group.key);
+      //Try the kingdom, since Fungi are grouped at this level
+      if(vernacularGroup === null){
+        vernacularGroup = getVernacularGroup(group.kingdomKey);
+      }
+      //default to scientific if no vernacular was found for this group
+      if(vernacularGroup === null){
+        vernacularGroup = {'key': group.key, 'value': group.name};//, 'numSpecies': group.numSpecies, 'numRecs': group.numRecs};
+      }
+      if(toReturn.hasOwnProperty(vernacularGroup.key)){
+        toReturn[vernacularGroup.key].numSpecies += group.numSpecies;
+        toReturn[vernacularGroup.key].numRecs += group.numRecs;
+      } else {
+        toReturn[vernacularGroup.key] = {'key': vernacularGroup.key, 'name': vernacularGroup.value, 'numSpecies': group.numSpecies, 'numRecs': group.numRecs};
+      }
+    });
+    return toReturn;
+  }
+
+  /*This takes a gbif taxon key and returns the matching vernacular group object from our custom list 
+    return: our custom vernacular object for this gbif key, or else 
+    */
+  function getVernacularGroup(testKey){
+    var toReturn = null;
+    _.each(vernacularGroupsData, function(group){
+      _.each(group.key.split(','), function(key){
+        if(testKey == key){
+          toReturn = group;
+        }
+      });
+    });
+    return toReturn;
+  }
+
+  function addGroupsToPage(groups){
+    var $tableBody = $('#species-group-summary > tbody');
+    _.each(groups, function(group){
+      $tableBody.append(
+        $('<tr>').append(
+          $('<td>').text(group.name),
+          $('<td>').text(group.numSpecies),
+          $('<td>').text(group.numRecs)
+          )
+      );
+    });
+    $('#summary').enhanceWithin();
+  }
+
+  function addTop10speciesToPage(top10Species){
+    var $tableBody = $('#top-ten-species > tbody');
+    _.each(top10Species, function(species){
+      var name = '<i>' + species.name + '</i>';
+      if(!getIsScientificNames()){
+        if(!_.isUndefined(species.vernacularName)){
+          name = species.vernacularName;
+        }
+      }
+      $tableBody.append(
+        $('<tr>').append(
+          $('<td>').html(name),
+          $('<td>').text(species.numRecs)
+          )
+      );
+    });
+    $('#summary').enhanceWithin();
+  }
+
+
 
 });

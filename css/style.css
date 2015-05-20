@@ -141,3 +141,32 @@ a:focus {
   margin-left: 1px;
   margin-right: 5px;
 }
+
+.summary-table {
+  width: 100%;
+}
+
+.summary-table tr {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.summary-table tr {
+    border-bottom: 1px solid #555;
+    text-align: center;
+}
+
+.summary-table td:first-child {
+    text-align: left;
+}
+
+.summary-table th:first-child {
+    text-align: left;
+}
+
+.datasets a {
+  font-weight: normal !important;
+  text-overflow: ellipsis;
+  overflow: visible;
+  white-space: normal !important;
+}
