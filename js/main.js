@@ -23,7 +23,7 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
     var yearOfRecords;//Used to track the year filter of the current set of species records, primarily to refresh the records if the slider's year value is diffferent
     var geojsonResults = {};//Data model for current view
     var hadLocationUnavailableError = false;//Tracks whether there has been a previous location unavailable error
-    var geolocateTimeout = 1000;
+    var geolocateTimeout = 5000;
     summaryData = {'loadingDatasets': false, 'loadingGroups': false, 'isLoading': function(){return this.loadingDatasets || this.loadingGroups;}}; //Tracks the loading of elements on the summary page for showing/hiding the loader
 
     initialise();
@@ -54,26 +54,25 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
       });
       map.on("locationfound", function(e){
         hadLocationUnavailableError = false;
+        map.setView([e.latitude, e.longitude], 15)
       });
       map.on("locationerror", function(e){
-        if(e.code == 2){//Location not available
+        if(e.code == 2 || e.code == 1){//Location not available or denied
           hadLocationUnavailableError = true;
           panToRandomReserve();
         }
-        if(e.code == 3 && !hadLocationUnavailableError){//Timeout and no previous unavailable error
+        if(e.code == 3 && !hadLocationUnavailableError){//Timeout and no previous location unavailable error
           panToRandomReserve();
         }
       });
       map.on("moveend", function(e){
         if(!waitingForRecords){
-         addRecords(false);
+          addRecords(false);
         } 
       });
-      map.locate({
-        setView: true, 
-        maxZoom: 15,
-        'timeout': geolocateTimeout
-      });
+       map.locate({
+         'timeout': geolocateTimeout
+       });
     }
 
     function panToRandomReserve(){
@@ -195,7 +194,6 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
     }
 
     function addRecords(isAddMoreRecords){
-      console.log('adding');
       boundingBoxOfRecords = getBoundsString(map);
       yearOfRecords = startYear;
       if(!hasOpenPopups){
@@ -229,19 +227,11 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
                 $('#add-more-records').text(moreRecordsText(totalNumRecords));
                 $('#summary-total-recs').html(totalNumRecords);
               },
-              // error: function(e) {
-              //   console.log("error");
-              //   waitingForRecords = false;
-              //   $.mobile.loading( "hide" );
-              // },
               error: function(json, textStatus, errorThrown) {
-                console.log("error");
-                console.log(json);
                 waitingForRecords = false;
                 $.mobile.loading( "hide" );
               },
               complete: function(e){
-                console.log('complete');
                 waitingForRecords = false;
                 $.mobile.loading( "hide" );
                 removeNavBarActive();
