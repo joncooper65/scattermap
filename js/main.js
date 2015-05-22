@@ -22,14 +22,16 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
     var boundingBoxOfRecords;//Used to track the bbox of the current set of species records, primarily to refresh the records if the map bounding box is different
     var yearOfRecords;//Used to track the year filter of the current set of species records, primarily to refresh the records if the slider's year value is diffferent
     var geojsonResults = {};//Data model for current view
+    var hadLocationUnavailableError = false;//Tracks whether there has been a previous location unavailable error
+    var geolocateTimeout = 5000;
     summaryData = {'loadingDatasets': false, 'loadingGroups': false, 'isLoading': function(){return this.loadingDatasets || this.loadingGroups;}}; //Tracks the loading of elements on the summary page for showing/hiding the loader
 
     initialise();
 
     function initialise(){
-      initialiseEvents();
-      initialiseMap();
-    }
+     initialiseEvents();
+     initialiseMap();
+     }
 
     function initialiseMap(){
       var openStreetMap = 
@@ -50,9 +52,50 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
         tap: true,
         layers: [openStreetMap]
       });
-      map.locate({setView: true, zoom: 5});
-      map.on("locationfound", onLocationFound);
-      map.on("locationerror", onLocationError);
+      map.on("locationfound", function(e){
+        hadLocationUnavailableError = false;
+        map.setView([e.latitude, e.longitude], 15)
+      });
+      map.on("locationerror", function(e){
+        if(e.code == 2 || e.code == 1){//Location not available or denied
+          hadLocationUnavailableError = true;
+          panToRandomReserve();
+        }
+        if(e.code == 3 && !hadLocationUnavailableError){//Timeout and no previous location unavailable error
+          panToRandomReserve();
+        }
+      });
+      map.on("moveend", function(e){
+        if(!waitingForRecords){
+          addRecords(false);
+        } 
+      });
+       map.locate({
+         'timeout': geolocateTimeout
+       });
+    }
+
+    function panToRandomReserve(){
+        var reserve = getRandomNatureReserve();
+        $('#random-reserve-name').html(reserve.name);
+        $('#no-location-popup').popup('open');
+        map.setView([reserve.lat,reserve.lon],reserve.zoom);
+    }
+
+    function getRandomNatureReserve(){
+      var reserves = [
+        {'name': 'Monks Wood', 'lat': 52.406, 'lon': -0.238, zoom: 14},
+        {'name': 'Barton Hills', 'lat': 51.956, 'lon': -0.421, zoom: 15},
+        {'name': 'The Lizard', 'lat': 49.958, 'lon': -5.206, zoom: 14},
+        {'name': 'Cliburn Moss', 'lat': 54.624, 'lon': -2.656, zoom: 15},
+        {'name': 'Buster Hill', 'lat': 50.978, 'lon': -0.981, zoom: 15},
+        {'name': 'Kinder Scout', 'lat': 53.385, 'lon': -1.875, zoom: 14},
+        {'name': 'Holton Heath', 'lat': 50.720, 'lon': -2.073, zoom: 15},
+        {'name': 'Foxley Wood', 'lat': 52.762, 'lon': 1.043, zoom: 14},
+        {'name': 'Weeting Heath', 'lat': 52.461, 'lon': 0.587, zoom: 15},
+        {'name': 'Langley Wood', 'lat': 52.101, 'lon': 0.842, zoom: 16}
+      ];
+      return reserves[Math.floor(Math.random() * reserves.length)];
     }
 
     function initialiseEvents(){
@@ -115,7 +158,7 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
 
       //Handle geolocation event
       $('#geolocate-button').click(function(){
-        map.locate({setView: true, zoom: 5});
+        map.locate({'timeout': geolocateTimeout});
       });
 
       //Populate summary page
@@ -150,20 +193,6 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
       $('.ui-content .ui-listview, .ui-panel-inner>.ui-listview').css('margin', '0em 0em -1em -1em');
     }
 
-    function onLocationFound(e){
-      addRecords(false);
-
-      map.on("movestart", function(e){});
-
-      map.on("move", function(e){});
-
-      map.on("moveend", function(e){
-        if(!waitingForRecords){
-      	 addRecords(false);
-        } 
-      });
-    }
-
     function addRecords(isAddMoreRecords){
       boundingBoxOfRecords = getBoundsString(map);
       yearOfRecords = startYear;
@@ -171,13 +200,15 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
         doLoading();
         waitingForRecords = true;
         var url = getGbifQuery(isAddMoreRecords);
+        console.log(url);
           $.ajax({
               type: 'GET',
               url: url,
-              jsonpCallback: 'processtoReturn',
               contentType: "application/json",
               dataType: 'jsonp',
+              timeout: 20000,
               success: function(json) {
+                console.log('success');
                 totalNumRecords = json.count;
                 if(!isAddMoreRecords){
                   removeCurrentMarkers();
@@ -196,12 +227,13 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
                 $('#add-more-records').text(moreRecordsText(totalNumRecords));
                 $('#summary-total-recs').html(totalNumRecords);
               },
-              error: function(e) {
+              error: function(json, textStatus, errorThrown) {
                 waitingForRecords = false;
                 $.mobile.loading( "hide" );
               },
               complete: function(e){
                 waitingForRecords = false;
+                $.mobile.loading( "hide" );
                 removeNavBarActive();
                 //Refresh records if state of controls has changed since ajax query sent
                 if(boundingBoxOfRecords !== getBoundsString(map)){
@@ -250,8 +282,7 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
                    + ((startYear != 1900) ? '&year=' + startYear + ',' + new Date().getFullYear() : '')
                    + getTaxonGroupKeys()
                    + '&limit=' + limit
-                   + ((isAddMoreRecords) ? '&offset=' + offset : '')
-                   + '&callback=processtoReturn';
+                   + ((isAddMoreRecords) ? '&offset=' + offset : '');
     }
 
     /* Returns the taxonGroups value (which may have a single value, csv or be empty) 
@@ -294,10 +325,6 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
         //have the nested 'species' property we were looking for
       }
      });
-    }
-
-    function onLocationError(e){
-      alert(e.message);
     }
 
     function handlePopupOpen(event){

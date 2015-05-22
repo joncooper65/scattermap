@@ -170,3 +170,18 @@ a:focus {
   overflow: visible;
   white-space: normal !important;
 }
+
+.ui-popup {
+  padding-right: 0.5em !important;
+  background-color: rgba(42,42,42,0.8) !important;
+}
+
+.random-reserve-popup > p {
+  text-align: center;
+}
+
+.random-reserve-popup > h4 {
+  font-size: 1.5em;
+  font-weight: normal;
+  text-align: center;
+}
