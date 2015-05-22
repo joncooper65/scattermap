@@ -118,6 +118,7 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
 
       //Update the map with the new year after the year slider has been used
       $('#slider-year').parent().touchend(handleYearChange);
+      $('#slider-year').parent().mouseup(handleYearChange);
       $('#slider-year').parent().keyup(handleYearChange);
 
       function handleYearChange(){
