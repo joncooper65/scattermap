@@ -93,7 +93,8 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
         {'name': 'Holton Heath', 'lat': 50.720, 'lon': -2.073, zoom: 15},
         {'name': 'Foxley Wood', 'lat': 52.762, 'lon': 1.043, zoom: 14},
         {'name': 'Weeting Heath', 'lat': 52.461, 'lon': 0.587, zoom: 15},
-        {'name': 'Langley Wood', 'lat': 52.101, 'lon': 0.842, zoom: 16}
+        {'name': 'Langley Wood', 'lat': 52.101, 'lon': 0.842, zoom: 16},
+        {'name': 'Aberbargoed Grasslands', 'lat': 51.685, 'lon': -3.213, zoom: 15}
       ];
       return reserves[Math.floor(Math.random() * reserves.length)];
     }
