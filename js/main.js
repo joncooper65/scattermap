@@ -200,7 +200,6 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
         doLoading();
         waitingForRecords = true;
         var url = getGbifQuery(isAddMoreRecords);
-        console.log(url);
           $.ajax({
               type: 'GET',
               url: url,
@@ -208,7 +207,6 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
               dataType: 'jsonp',
               timeout: 20000,
               success: function(json) {
-                console.log('success');
                 totalNumRecords = json.count;
                 if(!isAddMoreRecords){
                   removeCurrentMarkers();
