@@ -185,3 +185,16 @@ a:focus {
   font-weight: normal;
   text-align: center;
 }
+
+.app-highlight {
+  color: #dfff00;
+}
+
+.app-title {
+  margin-top: 5px;
+  color: #dfff00;
+  font-size: 1.5em !important;
+  font-weight: normal;
+  text-align: center;
+}
+
