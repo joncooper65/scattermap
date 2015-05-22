@@ -12,7 +12,7 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
 
     var map;
     var hasOpenPopups = false;
-    var isScientificNames = true;//Show either vernacular (false) names in popup, or else scientific - only used for those without localStorage
+    var isScientificNamePref = true;//Show either vernacular (false) names in popup, or else scientific - only used for those without localStorage
     var startYear = String(1900);//Don't get records before this year
     var taxonGroups = ''//Limit to a taxonomic group
     var totalNumRecords = 0;//Total number of records that are available from gbif for current region - used for paging
@@ -480,9 +480,9 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
     });
   }
 
-  function getPopupSpeciesNameLink(species, isScientificNames){
-    var name = species.name;
-    if(!isScientificNames && !_.isUndefined(species.vernacularName)){
+  function getPopupSpeciesNameLink(species, isScientificNamePref){
+    var name = '<i>' + species.name + '</i>';
+    if(!isScientificNamePref && !_.isUndefined(species.vernacularName)){
       name = species.vernacularName;
     }
     return '<li><a class="popup-link" href="#species-info-page?datasetKeys=' + species.datasetKeys.join(',') + '&taxonKey=' + species.taxonKey + '&earliest=' + species.earliestYear + '&latest=' + species.latestYear + '">' + name + '</a></li>';
@@ -571,7 +571,7 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
     });
   }
 
-  function addTaxonomyContent(params, data, isScientificNames){
+  function addTaxonomyContent(params, data, isScientificNamePref){
     var deferred = getTaxonomy(params.taxonKey);
     deferred.done(function(){
       var scientificName = deferred.responseJSON.species;
@@ -579,9 +579,9 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
       var speciesNameTitle = '<i>' + scientificName + '</i>';
       var speciesNameIntro = speciesNameTitle;
       if(!_.isUndefined(vernacularName)){
-        speciesNameTitle += ' (' + vernacularName + ')';
+        speciesNameTitle += ' (' + vernacularName.toLowerCase() + ')';
       }
-      if(!isScientificNames && !_.isUndefined(vernacularName)){
+      if(!isScientificNamePref && !_.isUndefined(vernacularName)){
         speciesNameIntro = vernacularName;
       }
       $('#species-name-title', data.toPage).html(speciesNameTitle);
@@ -632,20 +632,20 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
 
   function getIsScientificNames(){
     if(hasLocalStorage()){
-      if(_.isEmpty(localStorage.isScientificNames)){
-        localStorage.isScientificNames = true;
+      if(_.isEmpty(localStorage.isScientificNamePref)){
+        localStorage.isScientificNamePref = true;
       }
-      return (localStorage.isScientificNames === 'true');
+      return (localStorage.isScientificNamePref === 'true');
     } else {
-      return isScientificNames;
+      return isScientificNamePref;
     }
   }
 
   function setIsScientificNames(preference){
     if(hasLocalStorage()){
-      localStorage.isScientificNames = preference;
+      localStorage.isScientificNamePref = preference;
     } else {
-      isScientificNames = preference;
+      isScientificNamePref = preference;
     }
   }
 
@@ -774,7 +774,7 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
             var isRequiredSpecies = (species.taxonKey == deferred.responseJSON.speciesKey);
             if(isRequiredSpecies){
               if(!_.isUndefined(deferred.responseJSON.vernacularName)){
-                species.vernacularName = firstToUpper(deferred.responseJSON.vernacularName);
+                species.vernacularName = deferred.responseJSON.vernacularName;
               }
             }
           });
