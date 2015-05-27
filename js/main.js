@@ -24,6 +24,7 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
     var geojsonResults = {};//Data model for current view
     var hadLocationUnavailableError = false;//Tracks whether there has been a previous location unavailable error
     var geolocateTimeout = 5000;
+    var showWelcome = true;//Used to track whether or not to show welcome message on 'location unavailalble' popup
     summaryData = {'loadingDatasets': false, 'loadingGroups': false, 'isLoading': function(){return this.loadingDatasets || this.loadingGroups;}}; //Tracks the loading of elements on the summary page for showing/hiding the loader
 
     initialise();
@@ -55,6 +56,7 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
       map.on("locationfound", function(e){
         hadLocationUnavailableError = false;
         map.setView([e.latitude, e.longitude], 15)
+        showWelcome = false;
       });
       map.on("locationerror", function(e){
         if(e.code == 2 || e.code == 1){//Location not available or denied
@@ -64,6 +66,7 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
         if(e.code == 3 && !hadLocationUnavailableError){//Timeout and no previous location unavailable error
           panToRandomReserve();
         }
+        showWelcome = false;
       });
       map.on("moveend", function(e){
         if(!waitingForRecords){
@@ -77,6 +80,11 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
 
     function panToRandomReserve(){
         var reserve = getRandomNatureReserve();
+        if(showWelcome){
+          $('#welcome-message').show();
+        } else {
+          $('#welcome-message').hide();
+        }
         $('#random-reserve-name').html(reserve.name);
         $('#no-location-popup').popup('open');
         map.setView([reserve.lat,reserve.lon],reserve.zoom);
@@ -160,6 +168,7 @@ require(["jquery", "jquerymobile", "leaflet", "underscore"], function($, jquerym
 
       //Handle geolocation event
       $('#geolocate-button').click(function(){
+        showWelcome = false;
         map.locate({'timeout': geolocateTimeout});
       });
 
